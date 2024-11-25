@@ -6,6 +6,8 @@ using System.Drawing.Imaging;
 
 using libImage;
 
+using System.IO.Ports;
+
 namespace seuilAuto
 {
     public partial class Form1 : Form
@@ -15,6 +17,7 @@ namespace seuilAuto
         PixelFormat m_pixelFormat;
         UInt32 m_pixelType;
         Timer timAcq;
+        static SerialPort _serialPort;
 
         public Form1()
         {
@@ -23,6 +26,8 @@ namespace seuilAuto
             timAcq.Interval = 15;
             timAcq.Tick += timAcq_Tick;
             txt_info.Text = " Attente connexion...\n";
+            _serialPort = new SerialPort("COM3", 9600);
+
         }
 
         private void buttonOuvrir_Click(object sender, EventArgs e)
@@ -207,9 +212,32 @@ namespace seuilAuto
             imageSeuillee.Image = bmp;
         }
 
-        private void comUSB(object sender, EventArgs e)
+        private void ouverture_comUSB(object sender, EventArgs e)
         {
+            _serialPort.Open();
+            if (_serialPort.IsOpen)
+                txt_info.Text += Environment.NewLine + "Connexion au port série établie.";
+            else
+                txt_info.Text += Environment.NewLine + "Erreur lors de l'ouverture de la com.";
+        }
 
+        private void fermeture_comUSB(object sender, EventArgs e)
+        {
+            _serialPort.Close();
+            if (!_serialPort.IsOpen)
+                txt_info.Text += Environment.NewLine + "Port série fermmé.";
+            else
+                txt_info.Text += Environment.NewLine + "Erreur lors de la fermeture de la com.";
+        }
+        private string SerialPort_ReadData(object sender, SerialDataReceivedEventArgs e)
+        {
+            string message = _serialPort.ReadExisting();
+            return message;
+        }
+
+        private void Serialport_WriteData(string message)
+        {
+            _serialPort.WriteLine(message);
         }
 
         private void Close(object sender, FormClosingEventArgs e)
