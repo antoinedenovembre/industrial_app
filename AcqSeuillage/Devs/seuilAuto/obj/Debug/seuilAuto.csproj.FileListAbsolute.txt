@@ -35,3 +35,14 @@ D:\Perso\TELECOM\3ème année\Application C\AcqSeuillage\Devs\seuilAuto\obj\Debu
 D:\Perso\TELECOM\3ème année\Application C\AcqSeuillage\Devs\seuilAuto\obj\Debug\seuilAuto.csproj.CopyComplete
 D:\Perso\TELECOM\3ème année\Application C\AcqSeuillage\Devs\seuilAuto\obj\Debug\seuilAuto.exe
 D:\Perso\TELECOM\3ème année\Application C\AcqSeuillage\Devs\seuilAuto\obj\Debug\seuilAuto.pdb
+D:\Perso\TELECOM\GIT\industrial_app\AcqSeuillage\Devs\seuilAuto\bin\Debug\seuilAuto.exe.config
+D:\Perso\TELECOM\GIT\industrial_app\AcqSeuillage\Devs\seuilAuto\bin\Debug\seuilAuto.exe
+D:\Perso\TELECOM\GIT\industrial_app\AcqSeuillage\Devs\seuilAuto\bin\Debug\seuilAuto.pdb
+D:\Perso\TELECOM\GIT\industrial_app\AcqSeuillage\Devs\seuilAuto\obj\Debug\seuilAuto.csproj.AssemblyReference.cache
+D:\Perso\TELECOM\GIT\industrial_app\AcqSeuillage\Devs\seuilAuto\obj\Debug\seuilAuto.Form1.resources
+D:\Perso\TELECOM\GIT\industrial_app\AcqSeuillage\Devs\seuilAuto\obj\Debug\seuilAuto.Properties.Resources.resources
+D:\Perso\TELECOM\GIT\industrial_app\AcqSeuillage\Devs\seuilAuto\obj\Debug\seuilAuto.csproj.GenerateResource.cache
+D:\Perso\TELECOM\GIT\industrial_app\AcqSeuillage\Devs\seuilAuto\obj\Debug\seuilAuto.csproj.CoreCompileInputs.cache
+D:\Perso\TELECOM\GIT\industrial_app\AcqSeuillage\Devs\seuilAuto\obj\Debug\seuilAuto.csproj.CopyComplete
+D:\Perso\TELECOM\GIT\industrial_app\AcqSeuillage\Devs\seuilAuto\obj\Debug\seuilAuto.exe
+D:\Perso\TELECOM\GIT\industrial_app\AcqSeuillage\Devs\seuilAuto\obj\Debug\seuilAuto.pdb

@@ -22,6 +22,7 @@ namespace seuilAuto
             timAcq = new Timer();
             timAcq.Interval = 15;
             timAcq.Tick += timAcq_Tick;
+            txt_info.Text = " Attente connexion...\n";
         }
 
         private void buttonOuvrir_Click(object sender, EventArgs e)
@@ -37,7 +38,7 @@ namespace seuilAuto
                 //MessageBox.Show("Warning: Smartek Filter Driver not loaded.");
             }
 
-            // discover all devices on network
+            // discover all devices on network  
             smcsVisionApi.FindAllDevices(3.0);
             smcs.IDevice[] devices = smcsVisionApi.GetAllDevices();
             //MessageBox.Show(devices.Length.ToString());
@@ -77,16 +78,16 @@ namespace seuilAuto
                     status = m_device.SetIntegerNodeValue("TLParamsLocked", 1);
                     status = m_device.CommandNodeExecute("AcquisitionStart");
                     cameraConnected = true;
+
+                    txt_info.Text += Environment.NewLine + "\n Connexion établie\n";
+                    buttonOuvrir.BackColor = Color.LimeGreen;
                 }
             }
 
             if (!cameraConnected)
             {
-                /*
-                this.lblAdrIP.BackColor = Color.Red;
-                this.lblAdrIP.Text = "Erreur de connection!";
-                */
-                MessageBox.Show("Warning: Camera not connected");
+                txt_info.Text+= Environment.NewLine + "\n ATTENTION : Caméra non connectée\n";
+                buttonOuvrir.BackColor = Color.FromArgb(255, 128, 0);
             }
 
             timAcq.Start();
