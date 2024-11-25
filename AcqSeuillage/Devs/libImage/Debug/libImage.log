@@ -1,0 +1,12 @@
+﻿C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets(517,5): warning MSB8004: Le répertoire Output ne se termine pas par une barre oblique finale. Cette instance de build ajoutera une barre oblique, comme requis, pour permettre l'évaluation correcte du répertoire Output.
+  ImageClasse.cpp
+C:\Users\adute\Downloads\Exemple Seuillage(2)\Exemple Wrapper Image Seuillage Auto\Codes C++\src\ImageClasse.cpp(11,10): fatal  error C1083: Impossible d'ouvrir le fichier include : 'ImageClasse.h' : No such file or directory
+  ImageCouleur.cpp
+C:\Users\adute\Downloads\Exemple Seuillage(2)\Exemple Wrapper Image Seuillage Auto\Codes C++\src\ImageCouleur.cpp(9,10): fatal  error C1083: Impossible d'ouvrir le fichier include : 'ImageCouleur.h' : No such file or directory
+  ImageDouble.cpp
+C:\Users\adute\Downloads\Exemple Seuillage(2)\Exemple Wrapper Image Seuillage Auto\Codes C++\src\ImageDouble.cpp(10,10): fatal  error C1083: Impossible d'ouvrir le fichier include : 'ImageDouble.h' : No such file or directory
+  ImageNdg.cpp
+C:\Users\adute\Downloads\Exemple Seuillage(2)\Exemple Wrapper Image Seuillage Auto\Codes C++\src\ImageNdg.cpp(9,10): fatal  error C1083: Impossible d'ouvrir le fichier include : 'ImageNdg.h' : No such file or directory
+  libIHM.cpp
+C:\Users\adute\Downloads\Exemple Seuillage(2)\Exemple Wrapper Image Seuillage Auto\Codes C++\src\libIHM.cpp(11,10): fatal  error C1083: Impossible d'ouvrir le fichier include : 'libIHM.h' : No such file or directory
+  Génération de code en cours...
