@@ -5,6 +5,8 @@ using System.Windows.Forms;
 using System.Drawing.Imaging;
 
 using libImage;
+ 
+using System.IO.Ports;
 
 namespace seuilAuto
 {
@@ -15,6 +17,7 @@ namespace seuilAuto
         PixelFormat m_pixelFormat;
         UInt32 m_pixelType;
         Timer timAcq;
+        static SerialPort _serialPort;
 
         public Form1()
         {
@@ -23,6 +26,8 @@ namespace seuilAuto
             timAcq.Interval = 15;
             timAcq.Tick += timAcq_Tick;
             txt_info.Text = " Attente connexion...\n";
+            _serialPort = new SerialPort("COM3", 9600);
+
         }
 
         private void buttonOuvrir_Click(object sender, EventArgs e)
@@ -46,29 +51,8 @@ namespace seuilAuto
             {
                 // take first device in list
                 m_device = devices[0];
-
-                // uncomment to use specific model
-                //for (int i = 0; i < devices.Length; i++)
-                //{
-                //    if (devices[i].GetModelName() == "GC652M")
-                //    {
-                //        m_device = devices[i];
-                //    }
-                //}
-
-                // to change number of images in image buffer from default 10 images 
-                // call SetImageBufferFrameCount() method before Connect() method
-                //m_device.SetImageBufferFrameCount(20);
-
                 if (m_device != null && m_device.Connect())
                 {
-                    /*
-                    this.lblConnection.BackColor = Color.LimeGreen;
-                    this.lblConnection.Text = "Connection établie";
-                    this.lblAdrIP.BackColor = Color.LimeGreen;
-                    this.lblAdrIP.Text = "Adresse IP : " + Common.IpAddrToString(m_device.GetIpAddress());
-                    this.lblNomCamera.Text = m_device.GetManufacturerName() + " : " + m_device.GetModelName();
-                    */
 
                     // disable trigger mode
                     bool status = m_device.SetStringNodeValue("TriggerMode", "Off");
@@ -91,36 +75,6 @@ namespace seuilAuto
             }
 
             timAcq.Start();
-
-            /*
-            if (ouvrirImage.ShowDialog() == DialogResult.OK)
-            {
-                try
-                {
-                    Bitmap bmp;
-                    Image img = Image.FromFile(ouvrirImage.FileName);
-                    bmp = new Bitmap(img);
-
-                    imageDepart.Width = bmp.Width;
-                    imageDepart.Height = bmp.Height;
-                    // pour centrer image dans panel
-                    if (imageDepart.Width < panel1.Width)
-                        imageDepart.Left = (panel1.Width - imageDepart.Width) / 2;
-
-                    if (imageDepart.Height < panel1.Height)
-                        imageDepart.Top = (panel1.Height - imageDepart.Height) / 2;
-
-                    imageDepart.Image = bmp;
-
-                    imageSeuillee.Hide();
-                    valeurSeuilAuto.Hide();
-                }
-                catch
-                {
-                    MessageBox.Show("erreur !");
-                }
-            }
-            */
         }
 
         private void timAcq_Tick(object sender, EventArgs e)
@@ -137,18 +91,6 @@ namespace seuilAuto
                         BitmapData bd = null;
 
                         ImageUtils.CopyToBitmap(imageInfo, ref bitmap, ref bd, ref m_pixelFormat, ref m_rect, ref m_pixelType);
-                        //-------------------------------------------------------------------
-                        //if (m_pixelFormat == PixelFormat.Format8bppIndexed)
-                        //{
-                        //    // set palette
-                        //    ColorPalette palette = bitmap.Palette;
-                        //    for (int i = 0; i < 256; i++)
-                        //    {
-                        //        palette.Entries[i] = Color.FromArgb(255 - i, 255 - i, 255 - i);
-                        //    }
-                        //    bitmap.Palette = palette;
-                        //}
-                        //-------------------------------------------------------------------
                         if (bitmap != null)
                         {
                             this.imageDepart.Height = bitmap.Height;
@@ -207,9 +149,32 @@ namespace seuilAuto
             imageSeuillee.Image = bmp;
         }
 
-        private void comUSB(object sender, EventArgs e)
+        private void ouverture_comUSB(object sender, EventArgs e)
         {
+            _serialPort.Open();
+            if (_serialPort.IsOpen)
+                txt_info.Text += Environment.NewLine + "Connexion au port série établie.";
+            else
+                txt_info.Text += Environment.NewLine + "Erreur lors de l'ouverture de la com.";
+        }
 
+        private void fermeture_comUSB(object sender, EventArgs e)
+        {
+            _serialPort.Close();
+            if (!_serialPort.IsOpen)
+                txt_info.Text += Environment.NewLine + "Port série fermmé.";
+            else
+                txt_info.Text += Environment.NewLine + "Erreur lors de la fermeture de la com.";
+        }
+        private string SerialPort_ReadData(object sender, SerialDataReceivedEventArgs e)
+        {
+            string message = _serialPort.ReadExisting();
+            return message;
+        }
+
+        private void Serialport_WriteData(string message)
+        {
+            _serialPort.WriteLine(message);
         }
 
         private void Close(object sender, FormClosingEventArgs e)
