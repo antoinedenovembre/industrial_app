@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.7.34202.233
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "seuilAuto", "seuilAuto\seuilAuto.csproj", "{C8602A9B-3F55-4BEC-8ADB-7FBA92D1061D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PC1", "seuilAuto\PC1.csproj", "{C8602A9B-3F55-4BEC-8ADB-7FBA92D1061D}"
 	ProjectSection(ProjectDependencies) = postProject
 		{9D7F0689-81BA-4EC6-9C34-5D5DA884F66A} = {9D7F0689-81BA-4EC6-9C34-5D5DA884F66A}
 	EndProjectSection
