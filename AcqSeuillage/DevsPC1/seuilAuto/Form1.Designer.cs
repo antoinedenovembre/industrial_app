@@ -45,11 +45,13 @@
             this.txt_info = new System.Windows.Forms.TextBox();
             this.txt_objetC = new System.Windows.Forms.TextBox();
             this.label4 = new System.Windows.Forms.Label();
+            this.pictureBox2 = new System.Windows.Forms.PictureBox();
             ((System.ComponentModel.ISupportInitialize)(this.imageDepart)).BeginInit();
             this.panel1.SuspendLayout();
             this.panel2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.imageSeuillee)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).BeginInit();
             this.SuspendLayout();
             // 
             // ouvrirImage
@@ -59,6 +61,7 @@
             // 
             // imageDepart
             // 
+            this.imageDepart.BackColor = System.Drawing.Color.Transparent;
             this.imageDepart.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
             this.imageDepart.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.imageDepart.Cursor = System.Windows.Forms.Cursors.Default;
@@ -106,6 +109,7 @@
             // 
             // imageSeuillee
             // 
+            this.imageSeuillee.BackColor = System.Drawing.Color.Transparent;
             this.imageSeuillee.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.imageSeuillee.Dock = System.Windows.Forms.DockStyle.Fill;
             this.imageSeuillee.Location = new System.Drawing.Point(0, 0);
@@ -220,11 +224,21 @@
             this.label4.TabIndex = 11;
             this.label4.Text = "Nombre d\'objets C détectés :";
             // 
+            // pictureBox2
+            // 
+            this.pictureBox2.Location = new System.Drawing.Point(1082, 25);
+            this.pictureBox2.Name = "pictureBox2";
+            this.pictureBox2.Size = new System.Drawing.Size(233, 178);
+            this.pictureBox2.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.pictureBox2.TabIndex = 1;
+            this.pictureBox2.TabStop = false;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1334, 900);
+            this.Controls.Add(this.pictureBox2);
             this.Controls.Add(this.txt_objetC);
             this.Controls.Add(this.label4);
             this.Controls.Add(this.txt_info);
@@ -248,6 +262,7 @@
             this.panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.imageSeuillee)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -271,6 +286,7 @@
         private System.Windows.Forms.TextBox txt_info;
         private System.Windows.Forms.TextBox txt_objetC;
         private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.PictureBox pictureBox2;
     }
 }
 

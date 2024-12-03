@@ -10,14 +10,10 @@
 
 AcqSeuillage/Devs/.vs/
 
-*Debug*
-
 *.suo*
 
 *.ipch
 
 *.sdf
-
-*.vcxproj*
 
 *.cache

@@ -12,6 +12,7 @@ using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using smcs;
 
 namespace seuilAuto
 {
@@ -23,6 +24,11 @@ namespace seuilAuto
         PixelFormat m_pixelFormat;
         uint m_pixelType;
         Timer timAcq;
+        private smcs.IDevice device;
+        bool cameraConnected = false;
+        private Rectangle rect;
+        private PixelFormat pixelFormat;
+        private UInt32 pixelType;
 
         // Arduino
         static SerialPort _serialPort;
@@ -45,13 +51,13 @@ namespace seuilAuto
             _serialPort = new SerialPort("COM3", 9600);
 
             // Comm TCP/IP
-            m_ipAdrDistante = IPAddress.Parse("127.0.0.1");
+            m_ipAdrDistante = IPAddress.Parse("172.20.10.2");
             m_numPort = 8001;
 
             InitializeComponent();
         }
 
-        private async void send_image(object sender, EventArgs e, Image img)
+        private async void sendImage(Bitmap bmp)
         {
             using (TcpClient tcpClient = new TcpClient())
             {
@@ -60,11 +66,11 @@ namespace seuilAuto
 
                 try
                 {
-                    // Convert the Image to a byte array
+                    // Convert the Bitmap to a byte array
                     byte[] imageData;
                     using (MemoryStream ms = new MemoryStream())
                     {
-                        img.Save(ms, ImageFormat.Png); // You can use other formats like Jpeg if needed
+                        bmp.Save(ms, System.Drawing.Imaging.ImageFormat.Png); // Save the bitmap in PNG format
                         imageData = ms.ToArray();
                     }
 
@@ -74,23 +80,24 @@ namespace seuilAuto
 
                     // Send the image data
                     await stream.WriteAsync(imageData, 0, imageData.Length);
+                    // this.tb_log.AppendText("[CLIENT] Image sent successfully.\r\n");
 
                     // Read acknowledgment
                     byte[] buffer = new byte[1024];
                     int numBytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
                     string receivedMessage = Encoding.ASCII.GetString(buffer, 0, numBytesRead);
-                    MessageBox.Show(receivedMessage, "Acknowledgment", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    // this.tb_log.AppendText("[CLIENT] Acknowledgment received: " + receivedMessage + "\r\n");
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    // this.tb_log.AppendText("[CLIENT] Error: " + ex.Message + "\r\n");
                 }
             }
         }
 
         private void buttonOuvrir_Click(object sender, EventArgs e)
         {
-            bool cameraConnected = false;
+            /*bool cameraConnected = false;
 
             // initialize GigEVision API
             smcs.CameraSuite.InitCameraAPI();
@@ -130,10 +137,41 @@ namespace seuilAuto
                 txt_info.Text += Environment.NewLine + "\n ATTENTION : Caméra non connectée\n";
                 buttonOuvrir.BackColor = Color.FromArgb(255, 128, 0);
             }
+            */
+            try
+            {
+                smcs.CameraSuite.InitCameraAPI();
+                smcs.ICameraAPI smcsVisionApi = smcs.CameraSuite.GetCameraAPI();
+
+                smcsVisionApi.FindAllDevices(3.0);
+                smcs.IDevice[] devices = smcsVisionApi.GetAllDevices();
+
+                if (devices.Length > 0)
+                {
+                    device = devices[0];
+
+                    if (device != null && device.Connect())
+                    {
+                        bool status = device.SetStringNodeValue("TriggerMode", "Off");
+                        status = device.SetStringNodeValue("AcquisitionMode", "Continuous");
+                        status = device.SetIntegerNodeValue("TLParamsLocked", 1);
+                        status = device.CommandNodeExecute("AcquisitionStart");
+                    }
+
+                    cameraConnected = true;
+                }
+
+                timAcq.Start();
+            }
+            catch
+            {
+                cameraConnected = false;
+            }
         }
 
         private void timAcq_Tick(object sender, EventArgs e)
         {
+            /*
             if (m_device != null && m_device.IsConnected())
             {
                 if (!m_device.IsBufferEmpty())
@@ -148,19 +186,18 @@ namespace seuilAuto
                         ImageUtils.CopyToBitmap(imageInfo, ref bitmap, ref bd, ref m_pixelFormat, ref m_rect, ref m_pixelType);
                         if (bitmap != null)
                         {
-                            this.imageDepart.Height = bitmap.Height;
-                            this.imageDepart.Width = bitmap.Width;
-                            this.imageDepart.Image = bitmap;
-                            this.imageDepart.SizeMode= PictureBoxSizeMode.StretchImage;
+                            // imageDepart.Height = bitmap.Height;
+                            // imageDepart.Width = bitmap.Width;
+                            pictureBox2.Image = bitmap;
+                            // imageDepart.SizeMode= PictureBoxSizeMode.StretchImage;
                         }
-
-                        send_image(sender, e, bitmap);
 
                         // display image
                         if (bd != null)
                             bitmap.UnlockBits(bd);
 
-                        this.imageDepart.Invalidate();
+                        imageDepart.Image = bitmap;
+                        this.pictureBox2.Invalidate();
                     }
                     // remove (pop) image from image buffer
                     m_device.PopImage(imageInfo);
@@ -168,7 +205,64 @@ namespace seuilAuto
                     m_device.ClearImageBuffer();
 
                     seuillageAuto(sender, e);
+
+                    sendImage((Bitmap)imageSeuillee.Image);
                 }
+            }
+            */
+            try
+            {
+                if (device != null && device.IsConnected())
+                {
+                    if (!device.IsBufferEmpty())
+                    {
+                        smcs.IImageInfo imageInfo = null;
+                        device.GetImageInfo(ref imageInfo);
+                        if (imageInfo != null)
+                        {
+                            ClImage imageTraitee = new ClImage();
+                            Bitmap bitmap = (Bitmap)this.imageDepart.Image;
+                            BitmapData bd = null;
+
+                            ImageUtils.CopyToBitmap(imageInfo, ref bitmap, ref bd, ref pixelFormat, ref rect, ref pixelType);
+
+                            if (bitmap != null)
+                            {
+                                this.imageDepart.Image = bitmap;
+                            }
+
+                            // display image
+                            if (bd != null)
+                                bitmap.UnlockBits(bd);
+
+                            Bitmap clonedBitmap = new Bitmap(bitmap);
+
+                            unsafe
+                            {
+                                BitmapData bmpData = clonedBitmap.LockBits(new Rectangle(0, 0, clonedBitmap.Width, clonedBitmap.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+                                imageTraitee.objetLibDataImgPtr(1, bmpData.Scan0, bmpData.Stride, clonedBitmap.Height, clonedBitmap.Width);
+                                // 1 champ texte retour C++, le seuil auto
+                                clonedBitmap.UnlockBits(bmpData);
+                            }
+
+                            this.imageSeuillee.Image = clonedBitmap;
+
+                            sendImage(clonedBitmap);
+
+                            this.imageDepart.Invalidate();
+                            this.imageSeuillee.Invalidate();
+                        }
+
+                        // remove (pop) image from image buffer
+                        device.PopImage(imageInfo);
+                        // empty buffer
+                        device.ClearImageBuffer();
+                    }
+                }
+            }
+            catch
+            {
+                MessageBox.Show("CRASH ACK");
             }
         }
 
