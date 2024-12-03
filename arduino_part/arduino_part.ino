@@ -19,8 +19,6 @@ State robotState = onWaitButton;
 void setup() 
 {
   Serial.begin(9600); // Init la com série
-
-  
   pinMode(pinStartRobot, OUTPUT);  // Démarrage robot = sortie
   pinMode(robotStatePin, INPUT); // État robot = entrée
 
@@ -39,6 +37,9 @@ void loop()
         digitalWrite(pinStartRobot, HIGH);
         delay(1000);  // Attend une seconde
         digitalWrite(pinStartRobot, LOW);
+      }
+      else {
+      Serial.println("Error !!!");
       }
     }
     else {
