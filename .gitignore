@@ -1,4 +1,3 @@
-AcqSeuillage\Devs\.vs\*
 *.vsidx
 
 *.db
@@ -9,16 +8,22 @@ AcqSeuillage\Devs\.vs\*
 
 *.opendb
 
-AcqSeuillage/Devs/.vs/Devs/v17/
+AcqSeuillage/Devs/.vs/
 
-AcqSeuillage/Devs/libImage/x64/Debug/
+*Debug*
 
-AcqSeuillage/Devs/seuilAuto/bin/Debug/
+*Properties*
 
-*.vcxproj
+*.suo*
+
+*.ipch
+
+*.sdf
+
+*Settings*
+
+*.resx
+
+*.vcxproj*
 
 *.cache
-
-AcqSeuillage/Devs/seuilAuto/obj/Debug/seuilAuto.csproj.FileListAbsolute.txt
-
-AcqSeuillage/Devs/seuilAuto/obj/Debug/
