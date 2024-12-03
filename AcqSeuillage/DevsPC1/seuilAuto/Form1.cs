@@ -45,7 +45,7 @@ namespace seuilAuto
             _serialPort = new SerialPort("COM3", 9600);
 
             // Comm TCP/IP
-            m_ipAdrDistante = IPAddress.Parse("172.20.10.2");
+            m_ipAdrDistante = IPAddress.Parse("127.0.0.1");
             m_numPort = 8001;
 
             InitializeComponent();
@@ -121,16 +121,15 @@ namespace seuilAuto
 
                     txt_info.Text += Environment.NewLine + "\n Connexion établie\n";
                     buttonOuvrir.BackColor = Color.LimeGreen;
+                    timAcq.Start();
                 }
             }
 
             if (!cameraConnected)
             {
-                txt_info.Text+= Environment.NewLine + "\n ATTENTION : Caméra non connectée\n";
+                txt_info.Text += Environment.NewLine + "\n ATTENTION : Caméra non connectée\n";
                 buttonOuvrir.BackColor = Color.FromArgb(255, 128, 0);
             }
-
-            timAcq.Start();
         }
 
         private void timAcq_Tick(object sender, EventArgs e)

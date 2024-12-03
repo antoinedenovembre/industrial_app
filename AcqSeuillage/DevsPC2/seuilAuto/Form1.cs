@@ -24,7 +24,7 @@ namespace seuilAuto
             InitializeComponent();
 
             // Comm TCP/IP
-            m_ipAdrLocale = IPAddress.Parse("172.20.10.11");
+            m_ipAdrLocale = IPAddress.Parse("127.0.0.1");
             m_numPort = 8001;
 
             InitializeComponent();
@@ -60,64 +60,60 @@ namespace seuilAuto
         private async void HandleConnectionAsync(TcpListener listener)
         {
             var socket = await listener.AcceptSocketAsync();
+            // this.Invoke((MethodInvoker)delegate { dialog.AppendText("[SERVER] Connection accepted.\r\n"); });
 
             try
             {
-                byte[] countBuffer = new byte[4];
+                byte[] sizeBuffer = new byte[4];
 
-                // Read the number of images
-                int bytesRead = await socket.ReceiveAsync(new ArraySegment<byte>(countBuffer), SocketFlags.None);
+                // Read the size of the incoming image (optional step if sent by client)
+                int bytesRead = await socket.ReceiveAsync(new ArraySegment<byte>(sizeBuffer), SocketFlags.None);
                 if (bytesRead != 4)
                 {
-                    throw new Exception("Failed to read image count.");
+                    throw new Exception("Failed to read image size.");
                 }
-                int imageCount = BitConverter.ToInt32(countBuffer, 0);
+                int imageSize = BitConverter.ToInt32(sizeBuffer, 0);
 
-                for (int i = 0; i < imageCount; i++)
+                this.Invoke((MethodInvoker)delegate
                 {
-                    // Read the size of the next image
-                    byte[] sizeBuffer = new byte[4];
-                    bytesRead = await socket.ReceiveAsync(new ArraySegment<byte>(sizeBuffer), SocketFlags.None);
-                    if (bytesRead != 4)
-                    {
-                        throw new Exception($"Failed to read size of image {i + 1}.");
-                    }
-                    int imageSize = BitConverter.ToInt32(sizeBuffer, 0);
+                    // dialog.AppendText($"[SERVER] Expected image size: {imageSize} bytes.\r\n");
+                });
 
-                    // Read the image data
-                    byte[] imageBuffer = new byte[imageSize];
-                    int totalBytesRead = 0;
+                // Read the image data
+                byte[] imageBuffer = new byte[imageSize];
+                int totalBytesRead = 0;
 
-                    while (totalBytesRead < imageSize)
-                    {
-                        int chunkSize = await socket.ReceiveAsync(new ArraySegment<byte>(imageBuffer, totalBytesRead, imageSize - totalBytesRead), SocketFlags.None);
-                        if (chunkSize == 0) break; // Connection closed
-                        totalBytesRead += chunkSize;
-                    }
+                while (totalBytesRead < imageSize)
+                {
+                    int chunkSize = await socket.ReceiveAsync(new ArraySegment<byte>(imageBuffer, totalBytesRead, imageSize - totalBytesRead), SocketFlags.None);
+                    if (chunkSize == 0) break; // Connection closed
+                    totalBytesRead += chunkSize;
+                }
 
-                    if (totalBytesRead != imageSize)
-                    {
-                        throw new Exception($"Image {i + 1} data size mismatch.");
-                    }
+                if (totalBytesRead != imageSize)
+                {
+                    throw new Exception("Image data size mismatch.");
+                }
 
-                    // Display the received image in PictureBox (or save it if necessary)
-                    using (var ms = new MemoryStream(imageBuffer))
+                // Load the image from the byte array and display it in PictureBox
+                using (var ms = new MemoryStream(imageBuffer))
+                {
+                    Image receivedImage = Image.FromStream(ms);
+                    this.Invoke((MethodInvoker)delegate
                     {
-                        Image receivedImage = Image.FromStream(ms);
-                        this.Invoke((MethodInvoker)delegate
-                        {
-                            pictureBox1.Image = receivedImage;
-                        }); 
-                    }
+                        imageDepart.Image = receivedImage;
+                        // dialog.AppendText($"[SERVER] Image received and displayed in PictureBox.\r\n");
+                    });
                 }
 
                 // Send acknowledgment
                 string ack = "[SERVER ACK]\r\n";
                 await socket.SendAsync(new ArraySegment<byte>(Encoding.ASCII.GetBytes(ack)), SocketFlags.None);
+                // this.Invoke((MethodInvoker)delegate { dialog.AppendText("[SERVER] Acknowledgment sent.\r\n"); });
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                // this.Invoke((MethodInvoker)delegate { dialog.AppendText($"[SERVER] Error: {ex.Message}\r\n"); });
             }
             finally
             {
@@ -139,6 +135,11 @@ namespace seuilAuto
             }
 
             Environment.Exit(1);
+        }
+
+        private void buttonOuvrir_Click(object sender, EventArgs e)
+        {
+            bgWorker.RunWorkerAsync();
         }
     }
 }

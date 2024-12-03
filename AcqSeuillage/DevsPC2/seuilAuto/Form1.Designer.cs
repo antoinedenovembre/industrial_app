@@ -82,6 +82,7 @@
             this.buttonOuvrir.TabIndex = 1;
             this.buttonOuvrir.Text = "Start";
             this.buttonOuvrir.UseVisualStyleBackColor = false;
+            this.buttonOuvrir.Click += new System.EventHandler(this.buttonOuvrir_Click);
             // 
             // panel1
             // 
