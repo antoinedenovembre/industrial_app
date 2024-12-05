@@ -11,7 +11,6 @@ using System.IO;
 using System.Text;
 
 using libImage;
-using System.Runtime.InteropServices.ComTypes;
 
 namespace seuilAuto
 {
@@ -54,7 +53,7 @@ namespace seuilAuto
         {
             timAcq = new Timer
             {
-                Interval = 100
+                Interval = 500
             };
             timAcq.Tick += timAcq_Tick;
         }
@@ -116,6 +115,15 @@ namespace seuilAuto
 
         private void initTCPIP()
         {
+            m_tcpClient = new TcpClient();
+
+            // Increase the timeout span for sending and receiving
+            m_tcpClient.SendTimeout = 60000;  // 60 seconds (adjust as needed)
+            m_tcpClient.ReceiveTimeout = 60000;  // 60 seconds (adjust as needed)
+
+            // Disable the Nagle Algorithm to send data immediately
+            m_tcpClient.Client.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.NoDelay, true);
+
             m_remoteIP = IPAddress.Parse("127.0.0.1");
         }
 
@@ -242,12 +250,18 @@ namespace seuilAuto
 
         private async void sendImage(Bitmap bmp)
         {
-            using (TcpClient client = new TcpClient())
+            try
             {
-                await client.ConnectAsync(m_remoteIP, m_port);
-                NetworkStream stream = client.GetStream();
+                // Reconnect if the socket is disconnected
+                if (m_tcpClient == null || !m_tcpClient.Connected)
+                {
+                    Debug.WriteLine("[CLIENT] Reconnecting...");
+                    m_tcpClient?.Dispose();
+                    m_tcpClient = new TcpClient();
+                    await m_tcpClient.ConnectAsync(m_remoteIP, m_port);
+                }
 
-                try
+                using (NetworkStream stream = m_tcpClient.GetStream())
                 {
                     // Convert the Bitmap to a byte array
                     byte[] imageData;
@@ -263,18 +277,17 @@ namespace seuilAuto
 
                     // Send the image data
                     await stream.WriteAsync(imageData, 0, imageData.Length);
-                    // this.tb_log.AppendText("[CLIENT] Image sent successfully.\r\n");
 
-                    // Read acknowledgment
+                    // Read acknowledgment (if applicable)
                     byte[] buffer = new byte[1024];
                     int numBytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
                     string receivedMessage = Encoding.ASCII.GetString(buffer, 0, numBytesRead);
-                    // this.tb_log.AppendText("[CLIENT] Acknowledgment received: " + receivedMessage + "\r\n");
+                    Debug.WriteLine("[CLIENT] Acknowledgment received: " + receivedMessage);
                 }
-                catch (Exception ex)
-                {
-                    // this.tb_log.AppendText("[CLIENT] Error: " + ex.Message + "\r\n");
-                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("[CLIENT] Error: " + ex.Message);
             }
         }
 

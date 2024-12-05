@@ -88,78 +88,77 @@ namespace PC2
         private async void HandleConnectionAsync(TcpListener listener)
         {
             var socket = await listener.AcceptSocketAsync();
-            this.Invoke((MethodInvoker) delegate {
-                logbox.AppendText("[SERVER] Connection accepted.\r\n"); 
+            this.Invoke((MethodInvoker)delegate {
+                logbox.AppendText("[SERVER] Connection accepted.\r\n");
                 labelStatus.Text = "Connected";
                 labelStatus.ForeColor = Color.Green;
             });
 
             try
             {
-                byte[] sizeBuffer = new byte[4];
-
-                // Read the size of the incoming image (optional step if sent by client)
-                int bytesRead = await socket.ReceiveAsync(new ArraySegment<byte>(sizeBuffer), SocketFlags.None);
-                if (bytesRead != 4)
+                while (true) // Keep the connection open
                 {
-                    throw new Exception("Failed to read image size.");
-                }
-                int imageSize = BitConverter.ToInt32(sizeBuffer, 0);
+                    byte[] sizeBuffer = new byte[4];
 
-                this.Invoke((MethodInvoker)delegate
-                {
-                    logbox.AppendText($"[SERVER] Expected image size: {imageSize} bytes.\r\n");
-                });
+                    // Read the size of the incoming image
+                    int bytesRead = await socket.ReceiveAsync(new ArraySegment<byte>(sizeBuffer), SocketFlags.None);
+                    if (bytesRead == 0) break; // Connection closed
+                    if (bytesRead != 4)
+                    {
+                        throw new Exception("Failed to read image size.");
+                    }
+                    int imageSize = BitConverter.ToInt32(sizeBuffer, 0);
 
-                // Read the image data
-                byte[] imageBuffer = new byte[imageSize];
-                int totalBytesRead = 0;
-
-                while (totalBytesRead < imageSize)
-                {
-                    int chunkSize = await socket.ReceiveAsync(new ArraySegment<byte>(imageBuffer, totalBytesRead, imageSize - totalBytesRead), SocketFlags.None);
-                    if (chunkSize == 0) break; // Connection closed
-                    totalBytesRead += chunkSize;
-                }
-
-                if (totalBytesRead != imageSize)
-                {
-                    throw new Exception("Image data size mismatch.");
-                }
-
-                this.Invoke((MethodInvoker)delegate
-                {
-                    logbox.AppendText($"[SERVER] Image data received: {totalBytesRead} bytes.\r\n");
-                });
-
-                // Load the image from the byte array and display it in PictureBox
-                using (var ms = new MemoryStream(imageBuffer))
-                {
-                    Image receivedImage = Image.FromStream(ms);
                     this.Invoke((MethodInvoker)delegate
                     {
-                        updatePictubreBoxImage(pictureBoxReceived, (Bitmap) receivedImage);
-
-                        logbox.AppendText($"[SERVER] Image displayed in PictureBox.\r\n");
+                        logbox.AppendText($"[SERVER] Expected image size: {imageSize} bytes.\r\n");
                     });
-                }
 
-                // Send acknowledgment
-                string ack = "[SERVER ACK]\r\n";
-                await socket.SendAsync(new ArraySegment<byte>(Encoding.ASCII.GetBytes(ack)), SocketFlags.None);
-                this.Invoke((MethodInvoker)delegate { logbox.AppendText("[SERVER] Acknowledgment sent.\r\n"); });
+                    // Read the image data
+                    byte[] imageBuffer = new byte[imageSize];
+                    int totalBytesRead = 0;
+
+                    while (totalBytesRead < imageSize)
+                    {
+                        int chunkSize = await socket.ReceiveAsync(new ArraySegment<byte>(imageBuffer, totalBytesRead, imageSize - totalBytesRead), SocketFlags.None);
+                        if (chunkSize == 0) break; // Connection closed
+                        totalBytesRead += chunkSize;
+                    }
+
+                    if (totalBytesRead != imageSize)
+                    {
+                        throw new Exception("Image data size mismatch.");
+                    }
+
+                    this.Invoke((MethodInvoker)delegate
+                    {
+                        logbox.AppendText($"[SERVER] Image data received: {totalBytesRead} bytes.\r\n");
+                    });
+
+                    // Load the image from the byte array and display it in PictureBox
+                    using (var ms = new MemoryStream(imageBuffer))
+                    {
+                        Image receivedImage = Image.FromStream(ms);
+                        this.Invoke((MethodInvoker)delegate
+                        {
+                            updatePictubreBoxImage(pictureBoxReceived, (Bitmap)receivedImage);
+                            logbox.AppendText($"[SERVER] Image displayed in PictureBox.\r\n");
+                        });
+                    }
+
+                    // Send acknowledgment
+                    string ack = "[SERVER ACK]\r\n";
+                    await socket.SendAsync(new ArraySegment<byte>(Encoding.ASCII.GetBytes(ack)), SocketFlags.None);
+                    this.Invoke((MethodInvoker)delegate { logbox.AppendText("[SERVER] Acknowledgment sent.\r\n"); });
+                }
             }
             catch (Exception ex)
             {
                 this.Invoke((MethodInvoker)delegate {
-                    logbox.AppendText($"[SERVER] Error: {ex.Message}\r\n"); 
+                    logbox.AppendText($"[SERVER] Error: {ex.Message}\r\n");
                     labelStatus.Text = "Error";
                     labelStatus.ForeColor = Color.Red;
                 });
-            }
-            finally
-            {
-                socket.Close();
             }
         }
 
