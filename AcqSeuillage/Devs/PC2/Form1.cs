@@ -41,17 +41,16 @@ namespace PC2
                 return;
             }
 
-            // Select the wireless network interface starting with "192.168."
+            // Select the wireless network interface starting with "172.20"
             foreach (NetworkInterface ni in NetworkInterface.GetAllNetworkInterfaces())
             {
                 if (ni.NetworkInterfaceType == NetworkInterfaceType.Wireless80211 && ni.OperationalStatus == OperationalStatus.Up)
                 {
                     foreach (UnicastIPAddressInformation ip in ni.GetIPProperties().UnicastAddresses)
                     {
-                        if (ip.Address.AddressFamily == AddressFamily.InterNetwork && ip.Address.ToString().StartsWith("192.168."))
+                        if (ip.Address.AddressFamily == AddressFamily.InterNetwork && ip.Address.ToString().StartsWith("172.20"))
                         {
                             m_localIP = ip.Address;
-                            Debug.WriteLine($"[SERVER] Local IP address: {m_localIP}");
                             break;
                         }
                     }
@@ -59,11 +58,25 @@ namespace PC2
             }
         }
 
+        private void setStatus(Label label, bool status)
+        {
+            if (status)
+            {
+                label.Text = "Connecté";
+                label.ForeColor = Color.Green;
+            }
+            else
+            {
+                label.Text = "Déconnecté";
+                label.ForeColor = Color.Red;
+            }
+        }
+
         private void workerCallback(object sender, DoWorkEventArgs e)
         {
             TcpListener tcpListener = new TcpListener(m_localIP, m_port);
             tcpListener.Start();
-            this.Invoke((MethodInvoker) delegate { logbox.AppendText("[SERVER] Server started...\r\n"); });
+            this.Invoke((MethodInvoker) delegate { logbox.AppendText("[SERVER] Serveur démarré...\r\n"); });
 
             try
             {
@@ -88,10 +101,9 @@ namespace PC2
         private async void HandleConnectionAsync(TcpListener listener)
         {
             var socket = await listener.AcceptSocketAsync();
-            this.Invoke((MethodInvoker)delegate {
-                logbox.AppendText("[SERVER] Connection accepted.\r\n");
-                labelStatus.Text = "Connected";
-                labelStatus.ForeColor = Color.Green;
+            this.Invoke((MethodInvoker) delegate {
+                logbox.AppendText("[SERVER] Connexion acceptée\r\n");
+                setStatus(labelStatus, true);
             });
 
             try
@@ -111,7 +123,7 @@ namespace PC2
 
                     this.Invoke((MethodInvoker)delegate
                     {
-                        logbox.AppendText($"[SERVER] Expected image size: {imageSize} bytes.\r\n");
+                        logbox.AppendText($"[SERVER] Taille image attendue: {imageSize} octets.\r\n");
                     });
 
                     // Read the image data
@@ -132,7 +144,7 @@ namespace PC2
 
                     this.Invoke((MethodInvoker)delegate
                     {
-                        logbox.AppendText($"[SERVER] Image data received: {totalBytesRead} bytes.\r\n");
+                        logbox.AppendText($"[SERVER] Taille image reçue: {totalBytesRead} octets.\r\n");
                     });
 
                     // Load the image from the byte array and display it in PictureBox
@@ -142,22 +154,21 @@ namespace PC2
                         this.Invoke((MethodInvoker)delegate
                         {
                             updatePictubreBoxImage(pictureBoxReceived, (Bitmap)receivedImage);
-                            logbox.AppendText($"[SERVER] Image displayed in PictureBox.\r\n");
+                            logbox.AppendText($"[SERVER] Image affichée\r\n");
                         });
                     }
 
                     // Send acknowledgment
-                    string ack = "[SERVER ACK]\r\n";
+                    string ack = "[SERVER ACK]";
                     await socket.SendAsync(new ArraySegment<byte>(Encoding.ASCII.GetBytes(ack)), SocketFlags.None);
-                    this.Invoke((MethodInvoker)delegate { logbox.AppendText("[SERVER] Acknowledgment sent.\r\n"); });
+                    this.Invoke((MethodInvoker)delegate { logbox.AppendText("[SERVER] Acknowledgment envoyé\r\n"); });
                 }
             }
             catch (Exception ex)
             {
                 this.Invoke((MethodInvoker)delegate {
-                    logbox.AppendText($"[SERVER] Error: {ex.Message}\r\n");
-                    labelStatus.Text = "Error";
-                    labelStatus.ForeColor = Color.Red;
+                    logbox.AppendText($"[SERVER] Erreur: {ex.Message}\r\n");
+                    setStatus(labelStatus, false);
                 });
             }
         }

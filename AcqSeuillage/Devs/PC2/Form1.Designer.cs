@@ -58,12 +58,13 @@
             // 
             // buttonConnect
             // 
+            this.buttonConnect.BackColor = System.Drawing.SystemColors.ButtonHighlight;
             this.buttonConnect.Location = new System.Drawing.Point(47, 43);
             this.buttonConnect.Name = "buttonConnect";
             this.buttonConnect.Size = new System.Drawing.Size(242, 89);
             this.buttonConnect.TabIndex = 2;
-            this.buttonConnect.Text = "Start server";
-            this.buttonConnect.UseVisualStyleBackColor = true;
+            this.buttonConnect.Text = "Démarrer serveur";
+            this.buttonConnect.UseVisualStyleBackColor = false;
             this.buttonConnect.Click += new System.EventHandler(this.buttonConnect_Click);
             // 
             // logbox
@@ -78,7 +79,7 @@
             // 
             this.labelStatusTitle.AutoSize = true;
             this.labelStatusTitle.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.labelStatusTitle.Location = new System.Drawing.Point(326, 67);
+            this.labelStatusTitle.Location = new System.Drawing.Point(326, 83);
             this.labelStatusTitle.Name = "labelStatusTitle";
             this.labelStatusTitle.Size = new System.Drawing.Size(59, 20);
             this.labelStatusTitle.TabIndex = 6;
@@ -87,12 +88,13 @@
             // labelStatus
             // 
             this.labelStatus.AutoSize = true;
+            this.labelStatus.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.labelStatus.ForeColor = System.Drawing.Color.Red;
-            this.labelStatus.Location = new System.Drawing.Point(482, 67);
+            this.labelStatus.Location = new System.Drawing.Point(482, 83);
             this.labelStatus.Name = "labelStatus";
-            this.labelStatus.Size = new System.Drawing.Size(113, 20);
+            this.labelStatus.Size = new System.Drawing.Size(106, 20);
             this.labelStatus.TabIndex = 7;
-            this.labelStatus.Text = "Not connected";
+            this.labelStatus.Text = "Déconnecté";
             this.labelStatus.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // Form1

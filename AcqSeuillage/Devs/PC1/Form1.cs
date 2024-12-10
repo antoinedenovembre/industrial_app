@@ -61,7 +61,7 @@ namespace seuilAuto
         private void initCamera()
         {
             // ------------------- Simple variables -------------------
-            txt_info.Text = "Connecting...\n";
+            logCam.AppendText($"[CAMERA] Connexion à la caméra...\r\n");
 
             // -------------------- Camera API --------------------
             bool cameraConnected = false;
@@ -96,15 +96,18 @@ namespace seuilAuto
                     status = m_device.SetIntegerNodeValue("TLParamsLocked", 1);
                     status = m_device.CommandNodeExecute("AcquisitionStart");
 
-                    txt_info.Text += Environment.NewLine + "\nConnected to camera\n";
-                    buttonOuvrir.BackColor = Color.LimeGreen;
+                    logCam.AppendText($"[CAMERA] Connecté à la caméra\r\n");
+                    camStatus.Text = "Connecté";
+                    camStatus.ForeColor = Color.Green;
+                    setStatus(camStatus, true);
+
                 }
             }
 
             if (!cameraConnected)
             {
-                txt_info.Text += Environment.NewLine + "\n ERROR : Could not connect to camera\n";
-                buttonOuvrir.BackColor = Color.FromArgb(255, 0, 0);
+                logCam.AppendText($"[CAMERA] Echec de la connexion à la caméra\r\n");
+                setStatus(camStatus, false);
             }
         }
 
@@ -124,7 +127,24 @@ namespace seuilAuto
             // Disable the Nagle Algorithm to send data immediately
             m_tcpClient.Client.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.NoDelay, true);
 
-            m_remoteIP = IPAddress.Parse("127.0.0.1");
+            if (TESTING)
+                m_remoteIP = IPAddress.Parse("127.0.0.1");
+            else
+                m_remoteIP = IPAddress.Parse("172.20.10.2");
+        }
+
+        private void setStatus(Label label, bool status)
+        {
+            if (status)
+            {
+                label.Text = "Connecté";
+                label.ForeColor = Color.Green;
+            }
+            else
+            {
+                label.Text = "Déconnecté";
+                label.ForeColor = Color.Red;
+            }
         }
 
         private void buttonStart_Click(object sender, EventArgs e)
@@ -223,18 +243,26 @@ namespace seuilAuto
         {
             m_serialPort.Open();
             if (m_serialPort.IsOpen)
-                txt_info.Text += Environment.NewLine + "Connexion au port série établie.";
+            {
+                logCam.AppendText($"[CAMERA] Connexion serial établie\r\n");
+            }
             else
-                txt_info.Text += Environment.NewLine + "Erreur lors de l'ouverture de la com.";
+            {
+                logCam.AppendText($"[CAMERA] Echec de la connexion serial\r\n");
+            }
         }
 
         private void closeCOM(object sender, EventArgs e)
         {
             m_serialPort.Close();
             if (!m_serialPort.IsOpen)
-                txt_info.Text += Environment.NewLine + "Port série fermmé.";
+            {
+                   logCam.AppendText($"[CAMERA] Port série fermé\r\n");
+            }
             else
-                txt_info.Text += Environment.NewLine + "Erreur lors de la fermeture de la com.";
+            {
+                   logCam.AppendText($"[CAMERA] Echec de la fermeture du port série\r\n");
+            }
         }
 
         private string SerialPort_ReadData(object sender, SerialDataReceivedEventArgs e)
@@ -255,7 +283,7 @@ namespace seuilAuto
                 // Reconnect if the socket is disconnected
                 if (m_tcpClient == null || !m_tcpClient.Connected)
                 {
-                    Debug.WriteLine("[CLIENT] Reconnecting...");
+                    logTCP.AppendText("[CLIENT] Reconnexion à l'hôte...\r\n");
                     m_tcpClient?.Dispose();
                     m_tcpClient = new TcpClient();
                     await m_tcpClient.ConnectAsync(m_remoteIP, m_port);
@@ -282,12 +310,12 @@ namespace seuilAuto
                     byte[] buffer = new byte[1024];
                     int numBytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
                     string receivedMessage = Encoding.ASCII.GetString(buffer, 0, numBytesRead);
-                    Debug.WriteLine("[CLIENT] Acknowledgment received: " + receivedMessage);
+                    logTCP.AppendText($"[CLIENT] Acknowledgment reçu: {receivedMessage}\r\n");
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                Debug.WriteLine("[CLIENT] Error: " + ex.Message);
+                logTCP.AppendText("[CLIENT] Erreur TCP...\r\n");
             }
         }
 
@@ -299,17 +327,19 @@ namespace seuilAuto
         private async void connectToServer_Click(object sender, EventArgs e)
         {
             m_tcpClient = new TcpClient();
-            // this.tb_log.AppendText("[CLIENT] Connecting...\r\n");
+            logTCP.AppendText($"[CLIENT] Connexion à l'hôte {m_remoteIP} sur le port {m_port}...\r\n");
             try
             {
                 await m_tcpClient.ConnectAsync(m_remoteIP, m_port);
             }
             catch (Exception)
             {
-                //this.tb_log.AppendText("[CLIENT] Connection failed\r\n");
+                logTCP.AppendText("[CLIENT] Echec de la connexion à l'hôte\r\n");
+                setStatus(tcpStatus, false);
                 return;
             }
-            //this.tb_log.AppendText("[CLIENT] Connected\r\n");
+            logTCP.AppendText("[CLIENT] Connecté à l'hôte\r\n");
+            setStatus(tcpStatus, true);
         }
     }
 }
