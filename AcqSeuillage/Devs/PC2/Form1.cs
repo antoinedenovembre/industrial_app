@@ -76,7 +76,7 @@ namespace PC2
         {
             TcpListener tcpListener = new TcpListener(m_localIP, m_port);
             tcpListener.Start();
-            this.Invoke((MethodInvoker) delegate { logbox.AppendText("[SERVER] Serveur démarré...\r\n"); });
+            this.Invoke((MethodInvoker)delegate { logbox.AppendText("[SERVER] Serveur démarré...\r\n"); });
 
             try
             {
@@ -84,7 +84,9 @@ namespace PC2
                 {
                     if (tcpListener.Pending())
                     {
-                        HandleConnectionAsync(tcpListener);
+                        var socket = tcpListener.AcceptSocketAsync().Result;
+                        socket.ReceiveTimeout = 5000; // Set a timeout for ReceiveAsync
+                        Task.Run(() => HandleConnectionAsync(socket)); // Process each connection in a separate Task
                     }
                     else
                     {
@@ -98,23 +100,22 @@ namespace PC2
             }
         }
 
-        private async void HandleConnectionAsync(TcpListener listener)
+        private async void HandleConnectionAsync(Socket socket)
         {
-            var socket = await listener.AcceptSocketAsync();
-            this.Invoke((MethodInvoker) delegate {
+            this.Invoke((MethodInvoker)delegate {
                 logbox.AppendText("[SERVER] Connexion acceptée\r\n");
                 setStatus(labelStatus, true);
             });
 
             try
             {
-                while (true) // Keep the connection open
+                while (true)
                 {
-                    byte[] sizeBuffer = new byte[4];
-
                     // Read the size of the incoming image
+                    byte[] sizeBuffer = new byte[4];
                     int bytesRead = await socket.ReceiveAsync(new ArraySegment<byte>(sizeBuffer), SocketFlags.None);
                     if (bytesRead == 0) break; // Connection closed
+
                     if (bytesRead != 4)
                     {
                         throw new Exception("Failed to read image size.");
@@ -168,6 +169,14 @@ namespace PC2
             {
                 this.Invoke((MethodInvoker)delegate {
                     logbox.AppendText($"[SERVER] Erreur: {ex.Message}\r\n");
+                    setStatus(labelStatus, false);
+                });
+            }
+            finally
+            {
+                socket.Close(); // Ensure the socket is closed after the connection ends
+                this.Invoke((MethodInvoker)delegate {
+                    logbox.AppendText("[SERVER] Connexion fermée.\r\n");
                     setStatus(labelStatus, false);
                 });
             }

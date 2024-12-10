@@ -9,15 +9,18 @@ using smcs;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using System.Threading.Tasks;
+using System.Threading;
 
 using libImage;
+using System.Linq;
 
 namespace seuilAuto
 {
     public partial class Form1 : Form
     {
         // GENERAL
-        private bool TESTING = true;
+        private bool TESTING = false;
         private string m_imageDir = "C:\\Users\\adute\\Desktop\\img\\closed";
         private string[] m_images;
         private int m_imageIndex = 0;
@@ -27,7 +30,8 @@ namespace seuilAuto
         Rectangle m_rect;
         PixelFormat m_pixelFormat;
         uint m_pixelType;
-        Timer timAcq;
+        System.Windows.Forms.Timer timAcq;
+        private bool m_camConnected = false;
 
         // Arduino
         static SerialPort m_serialPort;
@@ -35,38 +39,56 @@ namespace seuilAuto
         // TCP/IP
         private IPAddress m_remoteIP;
         private TcpClient m_tcpClient;
+        private NetworkStream m_networkStream;
         private readonly int m_port = 8001;
 
         public Form1()
         {
             InitializeComponent();
             initTimer();
-            // initCamera();
             initArduino();
             initTCPIP();
 
-            // Fill a list with all images in the directory (png format)
-            m_images = Directory.GetFiles(m_imageDir, "*.png");
+            // Launch async initialization of camera API
+            Task.Run(() =>
+            {
+                while (!m_camConnected)
+                {
+                    try
+                    {
+                        initCamera();
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Camera initialization failed: {ex.Message}");
+                        Thread.Sleep(1000); // Avoid tight loop, retry every second
+                    }
+                }
+            });
         }
 
         private void initTimer()
         {
-            timAcq = new Timer
+            timAcq = new System.Windows.Forms.Timer
             {
-                Interval = 500
+                Interval = 66 // 15 FPS
             };
             timAcq.Tick += timAcq_Tick;
         }
 
         private void initCamera()
         {
-            // ------------------- Simple variables -------------------
-            logCam.AppendText($"[CAMERA] Connexion à la caméra...\r\n");
+            if (TESTING)
+            {
+                m_images = Directory.GetFiles(m_imageDir, "*.png");
+                AppendLog(logCam, $"[CAMERA][TESTING MODE] {m_images.Length} images trouvées\r\n");
+                m_camConnected = true;
+                setStatus(camStatus, true);
+                return;
+            }
 
-            // -------------------- Camera API --------------------
-            bool cameraConnected = false;
+            AppendLog(logCam, $"[CAMERA] Initialisation de la caméra...\r\n");
 
-            // Initialize GigEVision API
             CameraSuite.InitCameraAPI();
             ICameraAPI smcsVisionApi = CameraSuite.GetCameraAPI();
 
@@ -75,40 +97,29 @@ namespace seuilAuto
                 Debug.WriteLine("WARNING: Kernel driver is not used.");
             }
 
-            // Discover all devices on network  
             smcsVisionApi.FindAllDevices(3.0);
             IDevice[] devices = smcsVisionApi.GetAllDevices();
 
             if (devices.Length > 0)
             {
-                // Take first device in list
                 m_device = devices[0];
                 if (m_device != null && m_device.Connect())
                 {
+                    m_device.SetStringNodeValue("TriggerMode", "Off");
+                    m_device.SetStringNodeValue("AcquisitionMode", "Continuous");
+                    m_device.SetIntegerNodeValue("TLParamsLocked", 1);
+                    m_device.CommandNodeExecute("AcquisitionStart");
 
-                    // Disable trigger mode
-                    bool status = m_device.SetStringNodeValue("TriggerMode", "Off");
-                    
-                    // Set continuous acquisition mode
-                    status = m_device.SetStringNodeValue("AcquisitionMode", "Continuous");
-                    
-                    // Start acquisition
-                    status = m_device.SetIntegerNodeValue("TLParamsLocked", 1);
-                    status = m_device.CommandNodeExecute("AcquisitionStart");
-
-                    logCam.AppendText($"[CAMERA] Connecté à la caméra\r\n");
-                    camStatus.Text = "Connecté";
-                    camStatus.ForeColor = Color.Green;
+                    m_camConnected = true; // Set connected state
+                    AppendLog(logCam, $"[CAMERA] Connexion à la caméra établie\r\n");
                     setStatus(camStatus, true);
-
+                    return; // Exit the method as the camera is now connected
                 }
             }
 
-            if (!cameraConnected)
-            {
-                logCam.AppendText($"[CAMERA] Echec de la connexion à la caméra\r\n");
-                setStatus(camStatus, false);
-            }
+            AppendLog(logCam, $"[CAMERA] Echec de la connexion à la caméra\r\n");
+            setStatus(camStatus, false);
+            m_camConnected = false; // Ensure the flag is set
         }
 
         private void initArduino()
@@ -118,11 +129,12 @@ namespace seuilAuto
 
         private void initTCPIP()
         {
-            m_tcpClient = new TcpClient();
-
-            // Increase the timeout span for sending and receiving
-            m_tcpClient.SendTimeout = 60000;  // 60 seconds (adjust as needed)
-            m_tcpClient.ReceiveTimeout = 60000;  // 60 seconds (adjust as needed)
+            m_tcpClient = new TcpClient
+            {
+                // Increase the timeout span for sending and receiving
+                SendTimeout = 60000,  // 60 seconds (adjust as needed)
+                ReceiveTimeout = 60000  // 60 seconds (adjust as needed)
+            };
 
             // Disable the Nagle Algorithm to send data immediately
             m_tcpClient.Client.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.NoDelay, true);
@@ -130,20 +142,41 @@ namespace seuilAuto
             if (TESTING)
                 m_remoteIP = IPAddress.Parse("127.0.0.1");
             else
-                m_remoteIP = IPAddress.Parse("172.20.10.2");
+                m_remoteIP = IPAddress.Parse("127.0.0.1");
+            // m_remoteIP = IPAddress.Parse("172.20.10.2");
         }
 
         private void setStatus(Label label, bool status)
         {
-            if (status)
+            if (label.InvokeRequired)
             {
-                label.Text = "Connecté";
-                label.ForeColor = Color.Green;
+                label.Invoke((Action)(() =>
+                {
+                    label.Text = status ? "Connecté" : "Déconnecté";
+                    label.ForeColor = status ? Color.Green : Color.Red;
+                }));
             }
             else
             {
-                label.Text = "Déconnecté";
-                label.ForeColor = Color.Red;
+                label.Text = status ? "Connecté" : "Déconnecté";
+                label.ForeColor = status ? Color.Green : Color.Red;
+            }
+        }
+
+        private void AppendLog(TextBox textBox, string message)
+        {
+            if (textBox.InvokeRequired)
+            {
+                // Use Invoke to update the UI safely
+                textBox.Invoke((Action)(() =>
+                {
+                    textBox.AppendText(message);
+                }));
+            }
+            else
+            {
+                // If already on the UI thread, update directly
+                textBox.AppendText(message);
             }
         }
 
@@ -180,7 +213,7 @@ namespace seuilAuto
                             this.imageDepart.Height = bitmap.Height;
                             this.imageDepart.Width = bitmap.Width;
                             this.imageDepart.Image = bitmap;
-                            this.imageDepart.SizeMode= PictureBoxSizeMode.StretchImage;
+                            this.imageDepart.SizeMode = PictureBoxSizeMode.StretchImage;
                         }
 
                         // Display image
@@ -192,7 +225,7 @@ namespace seuilAuto
 
                     // Remove (pop) image from image buffer
                     m_device.PopImage(imageInfo);
-                    
+
                     // Empty buffer
                     m_device.ClearImageBuffer();
 
@@ -218,7 +251,7 @@ namespace seuilAuto
             }
 
             valeurSeuilAuto.Text = img.objetLibValeurChamp(0).ToString();
-            imageSeuillee.SizeMode= PictureBoxSizeMode.StretchImage;
+            imageSeuillee.SizeMode = PictureBoxSizeMode.StretchImage;
             imageSeuillee.Width = bmp.Width;
             imageSeuillee.Height = bmp.Height;
 
@@ -257,11 +290,11 @@ namespace seuilAuto
             m_serialPort.Close();
             if (!m_serialPort.IsOpen)
             {
-                   logCam.AppendText($"[CAMERA] Port série fermé\r\n");
+                logCam.AppendText($"[CAMERA] Port série fermé\r\n");
             }
             else
             {
-                   logCam.AppendText($"[CAMERA] Echec de la fermeture du port série\r\n");
+                logCam.AppendText($"[CAMERA] Echec de la fermeture du port série\r\n");
             }
         }
 
@@ -276,46 +309,81 @@ namespace seuilAuto
             m_serialPort.WriteLine(message);
         }
 
+        private Bitmap ResizeBitmap(Bitmap original, int newWidth, int newHeight)
+        {
+            Bitmap resized = new Bitmap(newWidth, newHeight);
+            using (Graphics g = Graphics.FromImage(resized))
+            {
+                g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.Bicubic;
+                g.DrawImage(original, 0, 0, newWidth, newHeight);
+            }
+            return resized;
+        }
+
+        private async Task EnsureConnectedAsync()
+        {
+            if (m_tcpClient == null || !m_tcpClient.Connected)
+            {
+                AppendLog(logTCP, "[CLIENT] Reconnecting to the server...\r\n");
+                try
+                {
+                    m_tcpClient?.Dispose();
+                    m_tcpClient = new TcpClient();
+                    await m_tcpClient.ConnectAsync(m_remoteIP, m_port);
+                    m_networkStream = m_tcpClient.GetStream(); // Initialize the stream here
+                    AppendLog(logTCP, "[CLIENT] Reconnected successfully.\r\n");
+                }
+                catch (Exception ex)
+                {
+                    AppendLog(logTCP, $"[CLIENT] Reconnection failed: {ex.Message}\r\n");
+                }
+            }
+        }
+
+        private async Task EnsureStreamAsync()
+        {
+            await EnsureConnectedAsync();
+            if (m_networkStream == null || !m_networkStream.CanWrite)
+            {
+                m_networkStream = m_tcpClient.GetStream();
+            }
+        }
+
         private async void sendImage(Bitmap bmp)
         {
             try
             {
-                // Reconnect if the socket is disconnected
-                if (m_tcpClient == null || !m_tcpClient.Connected)
+                // Ensure the connection and stream are ready
+                await EnsureStreamAsync();
+
+                // Convert the Bitmap to a byte array
+                byte[] imageData;
+                using (MemoryStream ms = new MemoryStream())
                 {
-                    logTCP.AppendText("[CLIENT] Reconnexion à l'hôte...\r\n");
-                    m_tcpClient?.Dispose();
-                    m_tcpClient = new TcpClient();
-                    await m_tcpClient.ConnectAsync(m_remoteIP, m_port);
+                    Bitmap resizedBmp = ResizeBitmap(bmp, bmp.Width / 4, bmp.Height / 4);
+                    resizedBmp.Save(ms, ImageFormat.Png); // Save the resized bitmap in PNG format
+                    imageData = ms.ToArray();
                 }
 
-                using (NetworkStream stream = m_tcpClient.GetStream())
-                {
-                    // Convert the Bitmap to a byte array
-                    byte[] imageData;
-                    using (MemoryStream ms = new MemoryStream())
-                    {
-                        bmp.Save(ms, ImageFormat.Png); // Save the bitmap in PNG format
-                        imageData = ms.ToArray();
-                    }
+                // Send the image size first
+                byte[] imageSize = BitConverter.GetBytes(imageData.Length);
+                await m_networkStream.WriteAsync(imageSize, 0, imageSize.Length);
 
-                    // Send the image size first (optional, helps server know how much data to expect)
-                    byte[] imageSize = BitConverter.GetBytes(imageData.Length);
-                    await stream.WriteAsync(imageSize, 0, imageSize.Length);
+                // Send the image data
+                await m_networkStream.WriteAsync(imageData, 0, imageData.Length);
 
-                    // Send the image data
-                    await stream.WriteAsync(imageData, 0, imageData.Length);
-
-                    // Read acknowledgment (if applicable)
-                    byte[] buffer = new byte[1024];
-                    int numBytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
-                    string receivedMessage = Encoding.ASCII.GetString(buffer, 0, numBytesRead);
-                    logTCP.AppendText($"[CLIENT] Acknowledgment reçu: {receivedMessage}\r\n");
-                }
+                // Read acknowledgment
+                byte[] buffer = new byte[1024];
+                int numBytesRead = await m_networkStream.ReadAsync(buffer, 0, buffer.Length);
+                string receivedMessage = Encoding.ASCII.GetString(buffer, 0, numBytesRead);
+                logTCP.AppendText($"[CLIENT] Acknowledgment reçu: {receivedMessage}\r\n");
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                logTCP.AppendText("[CLIENT] Erreur TCP...\r\n");
+                logTCP.AppendText($"[CLIENT] Erreur TCP: {ex.Message}\r\n");
+                m_tcpClient?.Dispose();
+                m_tcpClient = null;
+                m_networkStream = null;
             }
         }
 
@@ -326,20 +394,65 @@ namespace seuilAuto
 
         private async void connectToServer_Click(object sender, EventArgs e)
         {
-            m_tcpClient = new TcpClient();
-            logTCP.AppendText($"[CLIENT] Connexion à l'hôte {m_remoteIP} sur le port {m_port}...\r\n");
-            try
+            int timeoutMilliseconds = 5000; // Example: 5-second timeout
+            bool connected = await ConnectToServerAsync(m_remoteIP, m_port, timeoutMilliseconds);
+
+            if (connected)
             {
-                await m_tcpClient.ConnectAsync(m_remoteIP, m_port);
+                setStatus(tcpStatus, true);
             }
-            catch (Exception)
+            else
             {
-                logTCP.AppendText("[CLIENT] Echec de la connexion à l'hôte\r\n");
                 setStatus(tcpStatus, false);
-                return;
             }
-            logTCP.AppendText("[CLIENT] Connecté à l'hôte\r\n");
-            setStatus(tcpStatus, true);
+        }
+
+        private async Task<bool> ConnectToServerAsync(IPAddress ipAddress, int port, int timeoutMilliseconds)
+        {
+            using (var cts = new CancellationTokenSource(timeoutMilliseconds))
+            {
+                try
+                {
+                    // Ensure m_tcpClient is initialized only once and reused
+                    if (m_tcpClient == null || !m_tcpClient.Connected)
+                    {
+                        m_tcpClient = new TcpClient();
+                        AppendLog(logTCP, $"[CLIENT] Attempting to connect to {ipAddress} on port {port} with a timeout of {timeoutMilliseconds} ms...\r\n");
+
+                        var connectTask = m_tcpClient.ConnectAsync(ipAddress, port);
+                        var timeoutTask = Task.Delay(Timeout.Infinite, cts.Token); // Cancel this task if successful
+
+                        // Wait for either the connection or timeout
+                        var completedTask = await Task.WhenAny(connectTask, timeoutTask);
+
+                        if (completedTask == connectTask)
+                        {
+                            cts.Cancel(); // Cancel the timeout task
+                            AppendLog(logTCP, "[CLIENT] Connection successful.\r\n");
+                            return true; // Connection successful
+                        }
+                        else
+                        {
+                            AppendLog(logTCP, "[CLIENT] Connection timed out.\r\n");
+                            m_tcpClient.Dispose(); // Dispose if it times out
+                            m_tcpClient = null;
+                            return false; // Connection timeout
+                        }
+                    }
+                    else
+                    {
+                        AppendLog(logTCP, "[CLIENT] Already connected.\r\n");
+                        return true; // Already connected
+                    }
+                }
+                catch (Exception ex)
+                {
+                    AppendLog(logTCP, $"[CLIENT] Connection error: {ex.Message}\r\n");
+                    m_tcpClient?.Dispose(); // Clean up on error
+                    m_tcpClient = null;
+                    return false; // Connection failed
+                }
+            }
         }
     }
 }
