@@ -1,2 +1,12 @@
 ﻿C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets(517,5): warning MSB8004: Le répertoire Output ne se termine pas par une barre oblique finale. Cette instance de build ajoutera une barre oblique, comme requis, pour permettre l'évaluation correcte du répertoire Output.
-  libImage.vcxproj -> D:\Perso\TELECOM\3ème année\Application C\AcqSeuillage\Devs\seuilAuto\bin\Debug\libImage.dll
+  ImageClasse.cpp
+C:\Users\adute\Desktop\IPSI3\SmartIndustries\projetC#\industrial_app\AcqSeuillage\Codes C++\src\ImageClasse.cpp(551,38): warning C4267: '=' : conversion de 'size_t' en 'long', perte possible de données
+  ImageCouleur.cpp
+  ImageDouble.cpp
+  ImageNdg.cpp
+C:\Users\adute\Desktop\IPSI3\SmartIndustries\projetC#\industrial_app\AcqSeuillage\Codes C++\src\ImageNdg.cpp(267,12): warning C4267: '=' : conversion de 'size_t' en 'int', perte possible de données
+  libIHM.cpp
+  Génération de code en cours...
+  LINK : ..\seuilAuto\bin\Debug\libImage.dll introuvable ou non généré par la dernière édition de liens incrémentielle ; édition de liens complète en cours
+     Création de la bibliothèque ..\seuilAuto\bin\Debug\libImage.lib et de l'objet ..\seuilAuto\bin\Debug\libImage.exp
+  libImage.vcxproj -> C:\Users\adute\Desktop\IPSI3\SmartIndustries\projetC#\industrial_app\AcqSeuillage\Devs\seuilAuto\bin\Debug\libImage.dll
