@@ -13,7 +13,6 @@ using System.Threading.Tasks;
 using System.Threading;
 
 using libImage;
-using System.Linq;
 
 namespace seuilAuto
 {
@@ -32,6 +31,8 @@ namespace seuilAuto
         uint m_pixelType;
         System.Windows.Forms.Timer timAcq;
         private bool m_camConnected = false;
+        private Image m_tmpImg;
+        private readonly object imgLock = new object();
 
         // Arduino
         static SerialPort m_serialPort;
@@ -65,13 +66,16 @@ namespace seuilAuto
                     }
                 }
             });
+
+            timAcq.Start();
+            buttonOuvrir.Enabled = false;
         }
 
         private void initTimer()
         {
             timAcq = new System.Windows.Forms.Timer
             {
-                Interval = 66 // 15 FPS
+                Interval = 1000
             };
             timAcq.Tick += timAcq_Tick;
         }
@@ -125,6 +129,8 @@ namespace seuilAuto
         private void initArduino()
         {
             m_serialPort = new SerialPort("COM3", 9600);
+            openCOM(null, null);
+            m_serialPort.DataReceived += new SerialDataReceivedEventHandler(SerialPort_ReadRobotPos);
         }
 
         private void initTCPIP()
@@ -182,7 +188,7 @@ namespace seuilAuto
 
         private void buttonStart_Click(object sender, EventArgs e)
         {
-            timAcq.Start();
+            // timAcq.Start();
         }
 
         private void timAcq_Tick(object sender, EventArgs e)
@@ -210,17 +216,15 @@ namespace seuilAuto
                         ImageUtils.CopyToBitmap(imageInfo, ref bitmap, ref bd, ref m_pixelFormat, ref m_rect, ref m_pixelType);
                         if (bitmap != null)
                         {
-                            this.imageDepart.Height = bitmap.Height;
-                            this.imageDepart.Width = bitmap.Width;
-                            this.imageDepart.Image = bitmap;
-                            this.imageDepart.SizeMode = PictureBoxSizeMode.StretchImage;
+                            lock(imgLock)
+                            {
+                                m_tmpImg = bitmap;
+                            }
                         }
 
                         // Display image
                         if (bd != null)
                             bitmap.UnlockBits(bd);
-
-                        this.imageDepart.Invalidate();
                     }
 
                     // Remove (pop) image from image buffer
@@ -228,19 +232,21 @@ namespace seuilAuto
 
                     // Empty buffer
                     m_device.ClearImageBuffer();
-
-                    // Process image
-                    processImage();
                 }
             }
         }
 
         private void processImage()
         {
-            imageSeuillee.Show();
-            valeurSeuilAuto.Show();
-
-            Bitmap bmp = new Bitmap(imageDepart.Image);
+            Bitmap bmp;
+            lock(imgLock)
+            {
+                if (m_tmpImg == null)
+                {
+                    return;
+                }
+                bmp = (Bitmap)m_tmpImg.Clone();
+            }
             ClImage img = new ClImage();
 
             unsafe
@@ -251,25 +257,33 @@ namespace seuilAuto
             }
 
             valeurSeuilAuto.Text = img.objetLibValeurChamp(0).ToString();
-            imageSeuillee.SizeMode = PictureBoxSizeMode.StretchImage;
-            imageSeuillee.Width = bmp.Width;
-            imageSeuillee.Height = bmp.Height;
 
-            // pour centrer image dans panel
-            if (imageSeuillee.Width < panel1.Width)
-                imageSeuillee.Left = (panel1.Width - imageSeuillee.Width) / 2;
+            if (this.imageSeuillee.InvokeRequired)
+            {
+                this.imageSeuillee.Invoke(new MethodInvoker(delegate
+                {
+                    imageSeuillee.SizeMode = PictureBoxSizeMode.StretchImage;
+                    imageSeuillee.Width = bmp.Width;
+                    imageSeuillee.Height = bmp.Height;
 
-            if (imageSeuillee.Height < panel1.Height)
-                imageSeuillee.Top = (panel1.Height - imageSeuillee.Height) / 2;
+                    // pour centrer image dans panel
+                    if (imageSeuillee.Width < panel1.Width)
+                        imageSeuillee.Left = (panel1.Width - imageSeuillee.Width) / 2;
 
-            // transférer C++ vers bmp
-            imageSeuillee.Image = bmp;
+                    if (imageSeuillee.Height < panel1.Height)
+                        imageSeuillee.Top = (panel1.Height - imageSeuillee.Height) / 2;
+
+                    // transférer C++ vers bmp
+                    imageSeuillee.Image = bmp;
+                    imageSeuillee.Invalidate();
+                }));
+            }
 
             // Envoi de l'image
             sendImage(bmp);
 
-            // Fin
-            imageSeuillee.Invalidate();
+            // Envoi verdict
+            sendVerdict(true);
         }
 
         private void openCOM(object sender, EventArgs e)
@@ -277,11 +291,11 @@ namespace seuilAuto
             m_serialPort.Open();
             if (m_serialPort.IsOpen)
             {
-                logCam.AppendText($"[CAMERA] Connexion serial établie\r\n");
+                AppendLog(logCam, $"[CAMERA] Connexion serial établie\r\n");
             }
             else
             {
-                logCam.AppendText($"[CAMERA] Echec de la connexion serial\r\n");
+                AppendLog(logCam, $"[CAMERA] Echec de la connexion serial\r\n");
             }
         }
 
@@ -290,18 +304,43 @@ namespace seuilAuto
             m_serialPort.Close();
             if (!m_serialPort.IsOpen)
             {
-                logCam.AppendText($"[CAMERA] Port série fermé\r\n");
+                AppendLog(logCam, $"[CAMERA] Port série fermé\r\n");
             }
             else
             {
-                logCam.AppendText($"[CAMERA] Echec de la fermeture du port série\r\n");
+                AppendLog(logCam, $"[CAMERA] Echec de la fermeture du port série\r\n");
             }
         }
 
-        private string SerialPort_ReadData(object sender, SerialDataReceivedEventArgs e)
+        private void SerialPort_ReadRobotPos(object sender, SerialDataReceivedEventArgs e)
         {
             string message = m_serialPort.ReadExisting();
-            return message;
+
+            Console.WriteLine("Received message: " + message);
+            // If message contains "OBJECT_CAM", then take current tmpImg, process it and send it to server
+            if (message.Contains("TEST"))
+            {
+                lock(imgLock)
+                {
+                    if (m_tmpImg != null)
+                    {
+                        // Do the above but thread safe
+                        if (this.imageDepart.InvokeRequired)
+                        {
+                            this.imageDepart.Invoke(new MethodInvoker(delegate
+                            {
+                                this.imageDepart.Height = m_tmpImg.Height;
+                                this.imageDepart.Width = m_tmpImg.Width;
+                                this.imageDepart.Image = m_tmpImg;
+                                this.imageDepart.SizeMode = PictureBoxSizeMode.StretchImage;
+                                this.imageDepart.Invalidate();
+                            }));
+                        }
+                    }
+                }
+
+                processImage();
+            }
         }
 
         private void Serialport_WriteData(string message)
@@ -376,15 +415,20 @@ namespace seuilAuto
                 byte[] buffer = new byte[1024];
                 int numBytesRead = await m_networkStream.ReadAsync(buffer, 0, buffer.Length);
                 string receivedMessage = Encoding.ASCII.GetString(buffer, 0, numBytesRead);
-                logTCP.AppendText($"[CLIENT] Acknowledgment reçu: {receivedMessage}\r\n");
+                AppendLog(logTCP, $"[CLIENT] Acknowledgment reçu: {receivedMessage}\r\n");
             }
             catch (Exception ex)
             {
-                logTCP.AppendText($"[CLIENT] Erreur TCP: {ex.Message}\r\n");
+                AppendLog(logTCP, $"[CLIENT] Erreur TCP: {ex.Message}\r\n");
                 m_tcpClient?.Dispose();
                 m_tcpClient = null;
                 m_networkStream = null;
             }
+        }
+
+        private void sendVerdict(bool verdict)
+        {
+            Serialport_WriteData(verdict ? "OK" : "NOK");
         }
 
         private void Close(object sender, FormClosingEventArgs e)
