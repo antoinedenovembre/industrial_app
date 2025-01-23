@@ -39,11 +39,7 @@ void setup()
 // =============== FUNCTIONS ===============
 void updateState()
 {
-  Serial.print("[PIN START ROBOT] : ");
-  Serial.println(digitalRead(pinStartRobot));
   long dist = ultrasonic.read();
-  Serial.print("[DIST] : ");
-  Serial.println(dist);
   String data = Serial.readStringUntil('\n');
   bool isMoving = digitalRead(pinIsMoving) == HIGH;
 
@@ -53,7 +49,6 @@ void updateState()
       if (dist > 0 && dist < 10) 
       {
         workState = OBJECT_DETECTED;
-        Serial.println("OBJECT_DETECTED");
       }
       break;
 
@@ -61,7 +56,6 @@ void updateState()
       if (isMoving)
       {
         workState = WAITING_MOVE;
-        Serial.println("WAITING_MOVE");
       }
       break;
 
@@ -69,7 +63,6 @@ void updateState()
       if (!isMoving)
       {
         workState = OBJECT_CAM;
-        Serial.println("OBJECT_CAM");
       }
       break;
 
@@ -77,23 +70,19 @@ void updateState()
       if (data == "OK")
       {
         workState = VERDICT_OK;
-        Serial.println("VERDICT_OK");
       }
       else if (data == "NOK")
       {
         workState = VERDICT_NOK;
-        Serial.println("VERDICT_NOK");
       }
       break;
 
     case VERDICT_OK:
       workState = UNDEFINED; // Reset to initial state after verdict
-      Serial.println("UNDEFINED");
       break;
 
     case VERDICT_NOK:
       workState = UNDEFINED; // Reset to initial state after verdict
-      Serial.println("UNDEFINED");
       break;
 
     default:
@@ -104,8 +93,6 @@ void updateState()
 void startRobot()
 {
   digitalWrite(pinStartRobot, HIGH);
-  Serial.print("[PIN START ROBOT] : ");
-  Serial.println(digitalRead(pinStartRobot));
   delay(1000);  // Attend une seconde
   digitalWrite(pinStartRobot, LOW);
 }
@@ -126,7 +113,7 @@ void sendNOK()
 
 void notifyObjectCam()
 {
-  Serial.println("TEST");
+  Serial.println("X");
 }
 
 // =============== MAIN ===============

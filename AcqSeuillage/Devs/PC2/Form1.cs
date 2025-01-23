@@ -25,6 +25,11 @@ namespace PC2
             InitializeComponent();
             initWorker();
             initLocalIP();
+
+            // Start the worker when the form is loaded
+            this.Load += (s, e) => tcpWorker.RunWorkerAsync();
+
+            buttonConnect.Enabled = false;
         }
 
         private void initWorker()

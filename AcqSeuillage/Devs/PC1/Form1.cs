@@ -49,6 +49,7 @@ namespace seuilAuto
             initTimer();
             initArduino();
             initTCPIP();
+            initLogboxes();
 
             // Launch async initialization of camera API
             Task.Run(() =>
@@ -68,7 +69,14 @@ namespace seuilAuto
             });
 
             timAcq.Start();
-            buttonOuvrir.Enabled = false;
+        }
+
+        private void initLogboxes()
+        {
+            // Make logboxes readonly for the user
+            logCam.ReadOnly = true;
+            logSerial.ReadOnly = true;
+            logTCP.ReadOnly = true;
         }
 
         private void initTimer()
@@ -85,13 +93,13 @@ namespace seuilAuto
             if (TESTING)
             {
                 m_images = Directory.GetFiles(m_imageDir, "*.png");
-                AppendLog(logCam, $"[CAMERA][TESTING MODE] {m_images.Length} images trouvées\r\n");
+                AppendLog(logCam, $"[CAMERA][TESTING MODE] {m_images.Length} images trouvées");
                 m_camConnected = true;
                 setStatus(camStatus, true);
                 return;
             }
 
-            AppendLog(logCam, $"[CAMERA] Initialisation de la caméra...\r\n");
+            AppendLog(logCam, $"[CAMERA] Initialisation de la caméra...");
 
             CameraSuite.InitCameraAPI();
             ICameraAPI smcsVisionApi = CameraSuite.GetCameraAPI();
@@ -128,7 +136,7 @@ namespace seuilAuto
 
         private void initArduino()
         {
-            m_serialPort = new SerialPort("COM3", 9600);
+            m_serialPort = new SerialPort("COM5", 9600);
             openCOM(null, null);
             m_serialPort.DataReceived += new SerialDataReceivedEventHandler(SerialPort_ReadRobotPos);
         }
@@ -176,19 +184,14 @@ namespace seuilAuto
                 // Use Invoke to update the UI safely
                 textBox.Invoke((Action)(() =>
                 {
-                    textBox.AppendText(message);
+                    textBox.AppendText(message + "\r\n");
                 }));
             }
             else
             {
                 // If already on the UI thread, update directly
-                textBox.AppendText(message);
+                textBox.AppendText(message + "\r\n");
             }
-        }
-
-        private void buttonStart_Click(object sender, EventArgs e)
-        {
-            // timAcq.Start();
         }
 
         private void timAcq_Tick(object sender, EventArgs e)
@@ -219,6 +222,7 @@ namespace seuilAuto
                             lock(imgLock)
                             {
                                 m_tmpImg = bitmap;
+                                Console.WriteLine("Image acquired, size : " + bitmap.Size);
                             }
                         }
 
@@ -245,7 +249,7 @@ namespace seuilAuto
                 {
                     return;
                 }
-                bmp = (Bitmap)m_tmpImg.Clone();
+                bmp = (Bitmap) m_tmpImg.Clone();
             }
             ClImage img = new ClImage();
 
@@ -256,7 +260,7 @@ namespace seuilAuto
                 bmp.UnlockBits(bmpData);
             }
 
-            valeurSeuilAuto.Text = img.objetLibValeurChamp(0).ToString();
+            // valeurSeuilAuto.Text = img.objetLibValeurChamp(0).ToString();
 
             if (this.imageSeuillee.InvokeRequired)
             {
@@ -283,7 +287,7 @@ namespace seuilAuto
             sendImage(bmp);
 
             // Envoi verdict
-            sendVerdict(true);
+            sendVerdict(false);
         }
 
         private void openCOM(object sender, EventArgs e)
@@ -291,11 +295,13 @@ namespace seuilAuto
             m_serialPort.Open();
             if (m_serialPort.IsOpen)
             {
-                AppendLog(logCam, $"[CAMERA] Connexion serial établie\r\n");
+                AppendLog(logSerial, "[ARDUINO] Connexion serial établie");
+                setStatus(arduinoStatus, true);
             }
             else
             {
-                AppendLog(logCam, $"[CAMERA] Echec de la connexion serial\r\n");
+                AppendLog(logSerial, "[ARDUINO] Echec de la connexion serial");
+                setStatus(arduinoStatus, false);
             }
         }
 
@@ -304,11 +310,13 @@ namespace seuilAuto
             m_serialPort.Close();
             if (!m_serialPort.IsOpen)
             {
-                AppendLog(logCam, $"[CAMERA] Port série fermé\r\n");
+                AppendLog(logSerial, "[ARDUINO] Port série fermé");
+                setStatus(arduinoStatus, false);
             }
             else
             {
-                AppendLog(logCam, $"[CAMERA] Echec de la fermeture du port série\r\n");
+                AppendLog(logSerial, "[ARDUINO] Echec de la fermeture du port série");
+                setStatus(arduinoStatus, false);
             }
         }
 
@@ -316,30 +324,40 @@ namespace seuilAuto
         {
             string message = m_serialPort.ReadExisting();
 
-            Console.WriteLine("Received message: " + message);
+            AppendLog(logSerial, $"[ARDUINO] Message reçu: {message}");    
+
             // If message contains "OBJECT_CAM", then take current tmpImg, process it and send it to server
-            if (message.Contains("TEST"))
+            if (message.Contains("X"))
             {
                 lock(imgLock)
                 {
                     if (m_tmpImg != null)
                     {
+                        Console.WriteLine("Processing image...");
                         // Do the above but thread safe
                         if (this.imageDepart.InvokeRequired)
                         {
-                            this.imageDepart.Invoke(new MethodInvoker(delegate
+                            this.imageDepart.BeginInvoke(new MethodInvoker(delegate
                             {
-                                this.imageDepart.Height = m_tmpImg.Height;
-                                this.imageDepart.Width = m_tmpImg.Width;
-                                this.imageDepart.Image = m_tmpImg;
-                                this.imageDepart.SizeMode = PictureBoxSizeMode.StretchImage;
-                                this.imageDepart.Invalidate();
+                                lock (imgLock)
+                                {
+                                    this.imageDepart.Height = m_tmpImg.Height;
+                                    this.imageDepart.Width = m_tmpImg.Width;
+                                    this.imageDepart.Image = m_tmpImg;
+                                    this.imageDepart.SizeMode = PictureBoxSizeMode.StretchImage;
+                                    this.imageDepart.Invalidate();
+                                    Console.WriteLine("Image displayed");
+                                }
+
+                                processImage();
                             }));
                         }
                     }
+                    else
+                    {
+                        Console.WriteLine("No image to process");
+                    }
                 }
-
-                processImage();
             }
         }
 
@@ -363,18 +381,21 @@ namespace seuilAuto
         {
             if (m_tcpClient == null || !m_tcpClient.Connected)
             {
-                AppendLog(logTCP, "[CLIENT] Reconnecting to the server...\r\n");
+                AppendLog(logTCP, "[CLIENT] Reconnecting to the server...");
+                setStatus(tcpStatus, false); // Set status to 'Disconnected
                 try
                 {
                     m_tcpClient?.Dispose();
                     m_tcpClient = new TcpClient();
                     await m_tcpClient.ConnectAsync(m_remoteIP, m_port);
                     m_networkStream = m_tcpClient.GetStream(); // Initialize the stream here
-                    AppendLog(logTCP, "[CLIENT] Reconnected successfully.\r\n");
+                    AppendLog(logTCP, "[CLIENT] Reconnected successfully.");
+                    setStatus(tcpStatus, true); // Set status to 'Connected'
                 }
                 catch (Exception ex)
                 {
-                    AppendLog(logTCP, $"[CLIENT] Reconnection failed: {ex.Message}\r\n");
+                    AppendLog(logTCP, $"[CLIENT] Reconnection failed: {ex.Message}");
+                    setStatus(tcpStatus, false); // Set status to 'Disconnected'
                 }
             }
         }
@@ -415,11 +436,11 @@ namespace seuilAuto
                 byte[] buffer = new byte[1024];
                 int numBytesRead = await m_networkStream.ReadAsync(buffer, 0, buffer.Length);
                 string receivedMessage = Encoding.ASCII.GetString(buffer, 0, numBytesRead);
-                AppendLog(logTCP, $"[CLIENT] Acknowledgment reçu: {receivedMessage}\r\n");
+                AppendLog(logTCP, $"[CLIENT] Acknowledgment reçu: {receivedMessage}");
             }
             catch (Exception ex)
             {
-                AppendLog(logTCP, $"[CLIENT] Erreur TCP: {ex.Message}\r\n");
+                AppendLog(logTCP, $"[CLIENT] Erreur TCP: {ex.Message}");
                 m_tcpClient?.Dispose();
                 m_tcpClient = null;
                 m_networkStream = null;
@@ -444,10 +465,12 @@ namespace seuilAuto
             if (connected)
             {
                 setStatus(tcpStatus, true);
+                connectToServer.Enabled = false;
             }
             else
             {
                 setStatus(tcpStatus, false);
+                connectToServer.Enabled = true;
             }
         }
 
@@ -461,7 +484,7 @@ namespace seuilAuto
                     if (m_tcpClient == null || !m_tcpClient.Connected)
                     {
                         m_tcpClient = new TcpClient();
-                        AppendLog(logTCP, $"[CLIENT] Attempting to connect to {ipAddress} on port {port} with a timeout of {timeoutMilliseconds} ms...\r\n");
+                        AppendLog(logTCP, $"[CLIENT] Attempting to connect to {ipAddress} on port {port} with a timeout of {timeoutMilliseconds} ms...");
 
                         var connectTask = m_tcpClient.ConnectAsync(ipAddress, port);
                         var timeoutTask = Task.Delay(Timeout.Infinite, cts.Token); // Cancel this task if successful
@@ -472,12 +495,12 @@ namespace seuilAuto
                         if (completedTask == connectTask)
                         {
                             cts.Cancel(); // Cancel the timeout task
-                            AppendLog(logTCP, "[CLIENT] Connection successful.\r\n");
+                            AppendLog(logTCP, "[CLIENT] Connection successful.");
                             return true; // Connection successful
                         }
                         else
                         {
-                            AppendLog(logTCP, "[CLIENT] Connection timed out.\r\n");
+                            AppendLog(logTCP, "[CLIENT] Connection timed out.");
                             m_tcpClient.Dispose(); // Dispose if it times out
                             m_tcpClient = null;
                             return false; // Connection timeout
@@ -485,13 +508,13 @@ namespace seuilAuto
                     }
                     else
                     {
-                        AppendLog(logTCP, "[CLIENT] Already connected.\r\n");
+                        AppendLog(logTCP, "[CLIENT] Already connected.");
                         return true; // Already connected
                     }
                 }
                 catch (Exception ex)
                 {
-                    AppendLog(logTCP, $"[CLIENT] Connection error: {ex.Message}\r\n");
+                    AppendLog(logTCP, $"[CLIENT] Connection error: {ex.Message}");
                     m_tcpClient?.Dispose(); // Clean up on error
                     m_tcpClient = null;
                     return false; // Connection failed

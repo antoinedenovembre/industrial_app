@@ -40,9 +40,9 @@
             // 
             // pictureBoxReceived
             // 
-            this.pictureBoxReceived.Location = new System.Drawing.Point(17, 23);
+            this.pictureBoxReceived.Location = new System.Drawing.Point(-1, -1);
             this.pictureBoxReceived.Name = "pictureBoxReceived";
-            this.pictureBoxReceived.Size = new System.Drawing.Size(1035, 560);
+            this.pictureBoxReceived.Size = new System.Drawing.Size(581, 600);
             this.pictureBoxReceived.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
             this.pictureBoxReceived.TabIndex = 0;
             this.pictureBoxReceived.TabStop = false;
@@ -53,7 +53,7 @@
             this.panel.Controls.Add(this.pictureBoxReceived);
             this.panel.Location = new System.Drawing.Point(47, 207);
             this.panel.Name = "panel";
-            this.panel.Size = new System.Drawing.Size(1073, 600);
+            this.panel.Size = new System.Drawing.Size(582, 600);
             this.panel.TabIndex = 1;
             // 
             // buttonConnect
@@ -69,10 +69,10 @@
             // 
             // logbox
             // 
-            this.logbox.Location = new System.Drawing.Point(638, 24);
+            this.logbox.Location = new System.Drawing.Point(667, 43);
             this.logbox.Multiline = true;
             this.logbox.Name = "logbox";
-            this.logbox.Size = new System.Drawing.Size(461, 152);
+            this.logbox.Size = new System.Drawing.Size(461, 764);
             this.logbox.TabIndex = 3;
             // 
             // labelStatusTitle
