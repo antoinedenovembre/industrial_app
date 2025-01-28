@@ -43,6 +43,8 @@ void updateState()
   String data = Serial.readStringUntil('\n');
   bool isMoving = digitalRead(pinIsMoving) == HIGH;
 
+  Serial.println(dist);
+
   switch (workState)
   {
     case UNDEFINED:

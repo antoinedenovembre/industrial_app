@@ -90,5 +90,22 @@ namespace PC1_Sender
             }
             return resized;
         }
+
+        public static string SelectCOMPort(string[] ports)
+        {
+            Form form = new Form();
+            form.Text = "Sélectionner le port COM";
+            form.Size = new Size(300, 100);
+            form.StartPosition = FormStartPosition.CenterScreen;
+
+            ComboBox comboBox = new ComboBox();
+            comboBox.Location = new Point(10, 10);
+            comboBox.Size = new Size(200, 20);
+            comboBox.Items.AddRange(ports);
+            comboBox.SelectedIndex = 0;
+            form.ShowDialog();
+
+            return comboBox.SelectedItem.ToString();
+        }
     }
 }

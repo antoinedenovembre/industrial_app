@@ -36,7 +36,6 @@
             this.imageSeuillee = new System.Windows.Forms.PictureBox();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.logCam = new System.Windows.Forms.TextBox();
-            this.connectToServer = new System.Windows.Forms.Button();
             this.label5 = new System.Windows.Forms.Label();
             this.label6 = new System.Windows.Forms.Label();
             this.logTCP = new System.Windows.Forms.TextBox();
@@ -125,18 +124,6 @@
             this.logCam.Size = new System.Drawing.Size(293, 157);
             this.logCam.TabIndex = 9;
             // 
-            // connectToServer
-            // 
-            this.connectToServer.BackColor = System.Drawing.SystemColors.ButtonHighlight;
-            this.connectToServer.Location = new System.Drawing.Point(999, 61);
-            this.connectToServer.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
-            this.connectToServer.Name = "connectToServer";
-            this.connectToServer.Size = new System.Drawing.Size(248, 157);
-            this.connectToServer.TabIndex = 13;
-            this.connectToServer.Text = "Connexion serveur";
-            this.connectToServer.UseVisualStyleBackColor = false;
-            this.connectToServer.Click += new System.EventHandler(this.connectToServer_Click);
-            // 
             // label5
             // 
             this.label5.AutoSize = true;
@@ -199,7 +186,7 @@
             this.arduinoStatus.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.arduinoStatus.ForeColor = System.Drawing.Color.Red;
             this.arduinoStatus.ImageAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.arduinoStatus.Location = new System.Drawing.Point(834, 28);
+            this.arduinoStatus.Location = new System.Drawing.Point(1141, 33);
             this.arduinoStatus.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.arduinoStatus.Name = "arduinoStatus";
             this.arduinoStatus.Size = new System.Drawing.Size(106, 20);
@@ -210,7 +197,7 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(643, 28);
+            this.label2.Location = new System.Drawing.Point(836, 33);
             this.label2.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(64, 20);
@@ -220,10 +207,10 @@
             // logSerial
             // 
             this.logSerial.BackColor = System.Drawing.Color.White;
-            this.logSerial.Location = new System.Drawing.Point(647, 61);
+            this.logSerial.Location = new System.Drawing.Point(840, 66);
             this.logSerial.Multiline = true;
             this.logSerial.Name = "logSerial";
-            this.logSerial.Size = new System.Drawing.Size(293, 157);
+            this.logSerial.Size = new System.Drawing.Size(407, 157);
             this.logSerial.TabIndex = 19;
             // 
             // PC1
@@ -239,7 +226,6 @@
             this.Controls.Add(this.label6);
             this.Controls.Add(this.logTCP);
             this.Controls.Add(this.label5);
-            this.Controls.Add(this.connectToServer);
             this.Controls.Add(this.logCam);
             this.Controls.Add(this.panel2);
             this.Controls.Add(this.panel1);
@@ -268,7 +254,6 @@
         private System.Windows.Forms.PictureBox pictureBox1;
         private System.Windows.Forms.PictureBox imageSeuillee;
         private System.Windows.Forms.TextBox logCam;
-        private System.Windows.Forms.Button connectToServer;
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.TextBox logTCP;

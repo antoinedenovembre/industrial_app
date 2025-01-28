@@ -49,8 +49,8 @@ namespace PC1_Sender
         public PC1()
         {
             InitializeComponent();
-            initTimer();
             initArduino();
+            initTimer();
             initTCPIP();
             initLogboxes();
 
@@ -69,6 +69,47 @@ namespace PC1_Sender
                     catch (Exception ex)
                     {
                         Console.WriteLine($"Camera initialization failed: {ex.Message}");
+                        Thread.Sleep(1000); // Avoid tight loop, retry every second
+                    }
+                }
+            });
+
+            // Launch async connection TCP/IP, but wait each time for the previous one to finish
+            Task.Run(async () =>
+            {
+                while (!m_tcpConnected)
+                {
+                    try
+                    {
+                        if (!await connectTCPIP())
+                        {
+                            Thread.Sleep(1000); // Avoid tight loop, retry every second
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"TCP/IP initialization failed: {ex.Message}");
+                        Thread.Sleep(1000); // Avoid tight loop, retry every second
+                    }
+                }
+            });
+
+            // Launch async COM connection
+            Task.Run(async () =>
+            {
+                while (!m_arduinoConnected)
+                {
+                    try
+                    {
+                        if (!await openCOM())
+                        {
+                            Thread.Sleep(1000); // Avoid tight loop, retry every second
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Arduino initialization failed: {ex.Message}");
+                        Common.AppendLog(logSerial, $"[ARDUINO] Echec de la connexion: {ex.Message}");
                         Thread.Sleep(1000); // Avoid tight loop, retry every second
                     }
                 }
@@ -96,7 +137,7 @@ namespace PC1_Sender
         {
             timAcq = new System.Windows.Forms.Timer
             {
-                Interval = 1000
+                Interval = 500
             };
             timAcq.Tick += timAcq_Tick;
         }
@@ -140,8 +181,24 @@ namespace PC1_Sender
 
         private void initArduino()
         {
-            m_serialPort = new SerialPort("COM5", 9600);
-            openCOM();
+            // Scan for all open COM ports
+            string[] ports = SerialPort.GetPortNames();
+            
+            // If only one, m_serialPort is set to that port
+            m_serialPort = new SerialPort(ports[0], 9600);
+
+            // If more, give the user the choice to select the port
+            if (ports.Length > 1)
+            {
+                string port = Common.SelectCOMPort(ports);
+                if (port != null)
+                {
+                    m_serialPort = new SerialPort(port, 9600);
+                }
+            }
+
+            Common.AppendLog(logSerial, $"[ARDUINO] Initialisation du port série {m_serialPort.PortName}...");
+
             m_serialPort.DataReceived += new SerialDataReceivedEventHandler(SerialPort_ReadRobotPos);
         }
 
@@ -196,6 +253,7 @@ namespace PC1_Sender
                             lock(imgLock)
                             {
                                 m_tmpImg = bitmap;
+                                imageDepart.Image = bitmap;
                                 Console.WriteLine("Image acquired, size : " + bitmap.Size);
                             }
                         }
@@ -264,13 +322,13 @@ namespace PC1_Sender
             sendVerdict(false);
         }
 
-        private void openCOM()
+        private async Task<bool> openCOM()
         {
             if (!SerialPort.GetPortNames().Contains(m_serialPort.PortName))
             {
                 Common.AppendLog(logSerial, "[ARDUINO] Port série non trouvé");
                 Common.SetStatus(arduinoStatus, false);
-                return;
+                m_arduinoConnected = false;
             }
             m_serialPort.Open();
             
@@ -278,12 +336,16 @@ namespace PC1_Sender
             {
                 Common.AppendLog(logSerial, "[ARDUINO] Connexion serial établie");
                 Common.SetStatus(arduinoStatus, true);
+                m_arduinoConnected = true;
             }
             else
             {
                 Common.AppendLog(logSerial, "[ARDUINO] Echec de la connexion serial");
                 Common.SetStatus(arduinoStatus, false);
+                m_arduinoConnected = true;
             }
+
+            return m_arduinoConnected;
         }
 
         private void closeCOM()
@@ -311,32 +373,36 @@ namespace PC1_Sender
             {
                 return;
             }
-            Common.AppendLog(logSerial, $"[ARDUINO] Message : ({message})");    
+            Common.AppendLog(logSerial, $"[ARDUINO] Message : {message}");    
 
             // If message contains "OBJECT_CAM", then take current tmpImg, process it and send it to server
             if (message.Contains("X"))
             {
-                lock(imgLock)
+                Bitmap image;
+                lock (imgLock)
                 {
-                    if (m_tmpImg != null)
+                    if (m_tmpImg == null)
                     {
-                        // Do the above but thread safe
-                        if (this.imageDepart.InvokeRequired)
+                        return;
+                    }
+                    image = (Bitmap)m_tmpImg.Clone();
+                    Console.WriteLine("Take");
+                }
+                if (image != null)
+                {
+                    // Do the above but thread safe
+                    if (this.imageDepart.InvokeRequired)
+                    {
+                        this.imageDepart.BeginInvoke(new MethodInvoker(delegate
                         {
-                            this.imageDepart.BeginInvoke(new MethodInvoker(delegate
-                            {
-                                lock (imgLock)
-                                {
-                                    this.imageDepart.Height = m_tmpImg.Height;
-                                    this.imageDepart.Width = m_tmpImg.Width;
-                                    this.imageDepart.Image = m_tmpImg;
-                                    this.imageDepart.SizeMode = PictureBoxSizeMode.StretchImage;
-                                    this.imageDepart.Invalidate();
-                                }
+                            this.imageDepart.Height = image.Height;
+                            this.imageDepart.Width = image.Width;
+                            this.imageDepart.Image = image;
+                            this.imageDepart.SizeMode = PictureBoxSizeMode.StretchImage;
+                            this.imageDepart.Invalidate();
 
-                                processImage();
-                            }));
-                        }
+                            processImage();
+                        }));
                     }
                 }
             }
@@ -422,22 +488,22 @@ namespace PC1_Sender
             Serialport_WriteData(verdict ? "OK" : "NOK");
         }
 
-        private async void connectToServer_Click(object sender, EventArgs e)
+        private async Task<bool> connectTCPIP()
         {
             int timeoutMilliseconds = 5000; // Example: 5-second timeout
             Common.AppendLog(logTCP, "[TCP] En attente du serveur...");
-            bool connected = await ConnectToServerAsync(m_remoteIP, m_port, timeoutMilliseconds);
+            m_tcpConnected = await ConnectToServerAsync(m_remoteIP, m_port, timeoutMilliseconds);
 
-            if (connected)
+            if (m_tcpConnected)
             {
                 Common.SetStatus(tcpStatus, true);
-                connectToServer.Enabled = false;
             }
             else
             {
                 Common.SetStatus(tcpStatus, false);
-                connectToServer.Enabled = true;
             }
+
+            return m_tcpConnected;
         }
 
         private async Task<bool> ConnectToServerAsync(IPAddress ipAddress, int port, int timeoutMilliseconds)
