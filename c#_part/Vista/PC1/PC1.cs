@@ -49,10 +49,10 @@ namespace PC1_Sender
         public PC1()
         {
             InitializeComponent();
-            initArduino();
-            initTimer();
-            initTCPIP();
-            initLogboxes();
+            InitArduino();
+            InitTimer();
+            InitTCP();
+            InitLogboxes();
 
             // Add icon
             this.Icon = Properties.Resources.publish;
@@ -64,7 +64,7 @@ namespace PC1_Sender
                 {
                     try
                     {
-                        initCamera();
+                        InitCamera();
                     }
                     catch (Exception ex)
                     {
@@ -81,7 +81,7 @@ namespace PC1_Sender
                 {
                     try
                     {
-                        if (!await connectTCPIP())
+                        if (!await ConnectTCP())
                         {
                             Thread.Sleep(1000); // Avoid tight loop, retry every second
                         }
@@ -95,13 +95,13 @@ namespace PC1_Sender
             });
 
             // Launch async COM connection
-            Task.Run(async () =>
+            Task.Run(() =>
             {
                 while (!m_arduinoConnected)
                 {
                     try
                     {
-                        if (!await openCOM())
+                        if (!OpenCOM())
                         {
                             Thread.Sleep(1000); // Avoid tight loop, retry every second
                         }
@@ -120,12 +120,14 @@ namespace PC1_Sender
 
         private void Close(object sender, FormClosingEventArgs e)
         {
-            closeCOM();
+            CloseCOM();
+            CloseTCP();
+            CloseCamera();
             Environment.Exit(1);
         }
 
         // ============================================= INITIALIZATION =============================================
-        private void initLogboxes()
+        private void InitLogboxes()
         {
             // Make logboxes readonly for the user
             logCam.ReadOnly = true;
@@ -133,16 +135,16 @@ namespace PC1_Sender
             logTCP.ReadOnly = true;
         }
 
-        private void initTimer()
+        private void InitTimer()
         {
             timAcq = new System.Windows.Forms.Timer
             {
                 Interval = 500
             };
-            timAcq.Tick += timAcq_Tick;
+            timAcq.Tick += Acquisition;
         }
 
-        private void initCamera()
+        private void InitCamera()
         {
             Common.AppendLog(logCam, $"[CAMERA] Initialisation de la caméra...");
 
@@ -179,10 +181,17 @@ namespace PC1_Sender
             m_camConnected = false; // Ensure the flag is set
         }
 
-        private void initArduino()
+        private void InitArduino()
         {
             // Scan for all open COM ports
             string[] ports = SerialPort.GetPortNames();
+
+            // If no ports are found, m_serialPort is set to null
+            if (ports.Length == 0)
+            {
+                Common.AppendLog(logSerial, "[ARDUINO] Aucun port série trouvé");
+                return;
+            }
             
             // If only one, m_serialPort is set to that port
             m_serialPort = new SerialPort(ports[0], 9600);
@@ -199,10 +208,10 @@ namespace PC1_Sender
 
             Common.AppendLog(logSerial, $"[ARDUINO] Initialisation du port série {m_serialPort.PortName}...");
 
-            m_serialPort.DataReceived += new SerialDataReceivedEventHandler(SerialPort_ReadRobotPos);
+            m_serialPort.DataReceived += new SerialDataReceivedEventHandler(TriggerProcessImage);
         }
 
-        private async void initTCPIP()
+        private void InitTCP()
         {
             m_tcpClient = new TcpClient
             {
@@ -233,105 +242,28 @@ namespace PC1_Sender
             Common.AppendLog(logTCP, "[TCP] Appuyez sur 'Connexion serveur'");
         }
 
-        // ============================================= MEMBER FUNCTIONS =============================================
-        private void timAcq_Tick(object sender, EventArgs e)
+        // ================================================ UTILS ================================================
+
+        // Serial/COM
+
+        private bool OpenCOM()
         {
-            if (m_device != null && m_device.IsConnected())
+            if (m_serialPort == null)
             {
-                if (!m_device.IsBufferEmpty())
-                {
-                    IImageInfo imageInfo = null;
-                    m_device.GetImageInfo(ref imageInfo);
-                    if (imageInfo != null)
-                    {
-                        Bitmap bitmap = (Bitmap)this.imageDepart.Image;
-                        BitmapData bd = null;
-
-                        ImageUtils.CopyToBitmap(imageInfo, ref bitmap, ref bd, ref m_pixelFormat, ref m_rect, ref m_pixelType);
-                        if (bitmap != null)
-                        {
-                            lock(imgLock)
-                            {
-                                m_tmpImg = bitmap;
-                                imageDepart.Image = bitmap;
-                                Console.WriteLine("Image acquired, size : " + bitmap.Size);
-                            }
-                        }
-
-                        // Display image
-                        if (bd != null)
-                            bitmap.UnlockBits(bd);
-                    }
-
-                    // Remove (pop) image from image buffer
-                    m_device.PopImage(imageInfo);
-
-                    // Empty buffer
-                    m_device.ClearImageBuffer();
-                }
+                Common.SetStatus(arduinoStatus, false);
+                m_arduinoConnected = false;
+                return m_arduinoConnected;
             }
-        }
-
-        private void processImage()
-        {
-            Bitmap bmp;
-            lock(imgLock)
-            {
-                if (m_tmpImg == null)
-                {
-                    return;
-                }
-                bmp = (Bitmap) m_tmpImg.Clone();
-            }
-            ClImage img = new ClImage();
-
-            unsafe
-            {
-                BitmapData bmpData = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
-                img.objetLibDataImgPtr(1, bmpData.Scan0, bmpData.Stride, bmp.Height, bmp.Width);
-                bmp.UnlockBits(bmpData);
-            }
-
-            // valeurSeuilAuto.Text = img.objetLibValeurChamp(0).ToString();
-
-            if (this.imageSeuillee.InvokeRequired)
-            {
-                this.imageSeuillee.BeginInvoke(new MethodInvoker(delegate
-                {
-                    imageSeuillee.SizeMode = PictureBoxSizeMode.StretchImage;
-                    imageSeuillee.Width = bmp.Width;
-                    imageSeuillee.Height = bmp.Height;
-
-                    // pour centrer image dans panel
-                    if (imageSeuillee.Width < panel1.Width)
-                        imageSeuillee.Left = (panel1.Width - imageSeuillee.Width) / 2;
-
-                    if (imageSeuillee.Height < panel1.Height)
-                        imageSeuillee.Top = (panel1.Height - imageSeuillee.Height) / 2;
-
-                    // transférer C++ vers bmp
-                    imageSeuillee.Image = bmp;
-                    imageSeuillee.Invalidate();
-                }));
-            }
-
-            // Envoi de l'image
-            sendImage(bmp);
-
-            // Envoi verdict
-            sendVerdict(false);
-        }
-
-        private async Task<bool> openCOM()
-        {
             if (!SerialPort.GetPortNames().Contains(m_serialPort.PortName))
             {
                 Common.AppendLog(logSerial, "[ARDUINO] Port série non trouvé");
                 Common.SetStatus(arduinoStatus, false);
                 m_arduinoConnected = false;
+                return m_arduinoConnected;
             }
+
             m_serialPort.Open();
-            
+
             if (m_serialPort.IsOpen)
             {
                 Common.AppendLog(logSerial, "[ARDUINO] Connexion serial établie");
@@ -348,7 +280,7 @@ namespace PC1_Sender
             return m_arduinoConnected;
         }
 
-        private void closeCOM()
+        private void CloseCOM()
         {
             m_serialPort.Close();
             if (!m_serialPort.IsOpen)
@@ -362,58 +294,15 @@ namespace PC1_Sender
                 Common.SetStatus(arduinoStatus, false);
             }
         }
-
-        private void SerialPort_ReadRobotPos(object sender, SerialDataReceivedEventArgs e)
-        {
-            string message = m_serialPort.ReadExisting();
-
-            // Clean up message from line breaks and spaces
-            message = message.Replace("\n", "").Replace("\r", "").Replace(" ", "");
-            if (message.Length == 0 || message.Equals(""))
-            {
-                return;
-            }
-            Common.AppendLog(logSerial, $"[ARDUINO] Message : {message}");    
-
-            // If message contains "OBJECT_CAM", then take current tmpImg, process it and send it to server
-            if (message.Contains("X"))
-            {
-                Bitmap image;
-                lock (imgLock)
-                {
-                    if (m_tmpImg == null)
-                    {
-                        return;
-                    }
-                    image = (Bitmap)m_tmpImg.Clone();
-                    Console.WriteLine("Take");
-                }
-                if (image != null)
-                {
-                    // Do the above but thread safe
-                    if (this.imageDepart.InvokeRequired)
-                    {
-                        this.imageDepart.BeginInvoke(new MethodInvoker(delegate
-                        {
-                            this.imageDepart.Height = image.Height;
-                            this.imageDepart.Width = image.Width;
-                            this.imageDepart.Image = image;
-                            this.imageDepart.SizeMode = PictureBoxSizeMode.StretchImage;
-                            this.imageDepart.Invalidate();
-
-                            processImage();
-                        }));
-                    }
-                }
-            }
-        }
-
-        private void Serialport_WriteData(string message)
+        
+        private void WriteSerial(string message)
         {
             m_serialPort.WriteLine(message);
         }
 
-        private async Task EnsureConnectedAsync()
+        // Ethernet/TCP
+
+        private async Task CheckTCPConnection()
         {
             if (m_tcpClient == null || !m_tcpClient.Connected)
             {
@@ -436,59 +325,16 @@ namespace PC1_Sender
             }
         }
 
-        private async Task EnsureStreamAsync()
+        private async Task CheckTCPStream()
         {
-            await EnsureConnectedAsync();
+            await CheckTCPConnection();
             if (m_networkStream == null || !m_networkStream.CanWrite)
             {
                 m_networkStream = m_tcpClient.GetStream();
             }
         }
 
-        private async void sendImage(Bitmap bmp)
-        {
-            try
-            {
-                // Ensure the connection and stream are ready
-                await EnsureStreamAsync();
-
-                // Convert the Bitmap to a byte array
-                byte[] imageData;
-                using (MemoryStream ms = new MemoryStream())
-                {
-                    Bitmap resizedBmp = Common.ResizeBitmap(bmp, bmp.Width / 4, bmp.Height / 4);
-                    resizedBmp.Save(ms, ImageFormat.Png); // Save the resized bitmap in PNG format
-                    imageData = ms.ToArray();
-                }
-
-                // Send the image size first
-                byte[] imageSize = BitConverter.GetBytes(imageData.Length);
-                await m_networkStream.WriteAsync(imageSize, 0, imageSize.Length);
-
-                // Send the image data
-                await m_networkStream.WriteAsync(imageData, 0, imageData.Length);
-
-                // Read acknowledgment
-                byte[] buffer = new byte[1024];
-                int numBytesRead = await m_networkStream.ReadAsync(buffer, 0, buffer.Length);
-                string receivedMessage = Encoding.ASCII.GetString(buffer, 0, numBytesRead);
-                Common.AppendLog(logTCP, $"[TCP] Acknowledgment reçu: {receivedMessage}");
-            }
-            catch (Exception ex)
-            {
-                Common.AppendLog(logTCP, $"[TCP] Erreur TCP: {ex.Message}");
-                m_tcpClient?.Dispose();
-                m_tcpClient = null;
-                m_networkStream = null;
-            }
-        }
-
-        private void sendVerdict(bool verdict)
-        {
-            Serialport_WriteData(verdict ? "OK" : "NOK");
-        }
-
-        private async Task<bool> connectTCPIP()
+        private async Task<bool> ConnectTCP()
         {
             int timeoutMilliseconds = 5000; // Example: 5-second timeout
             Common.AppendLog(logTCP, "[TCP] En attente du serveur...");
@@ -552,6 +398,236 @@ namespace PC1_Sender
                     return false; // Connection failed
                 }
             }
+        }
+
+        private void CloseTCP()
+        {
+            m_tcpClient?.Dispose();
+            m_tcpClient = null;
+            m_networkStream = null;
+            Common.AppendLog(logTCP, "[TCP] Connexion fermée");
+            Common.SetStatus(tcpStatus, false);
+        }
+
+        // Camera
+
+        private void CloseCamera()
+        {
+            if (m_device != null)
+            {
+                if (m_device.IsConnected())
+                {
+                    m_device.CommandNodeExecute("AcquisitionStop");
+                    m_device.SetIntegerNodeValue("TLParamsLocked", 0);
+                    m_device.Disconnect();
+
+                    smcs.CameraSuite.ExitCameraAPI();
+
+                    m_camConnected = false;
+                    Common.SetStatus(camStatus, false);
+                    Common.AppendLog(logCam, "[CAMERA] Caméra déconnectée\r\n");
+                }
+            }
+        }
+
+        // ============================================= MEMBER FUNCTIONS =============================================
+
+        private void Acquisition(object sender, EventArgs e)
+        {
+            if (m_device != null && m_device.IsConnected())
+            {
+                if (!m_device.IsBufferEmpty())
+                {
+                    IImageInfo imageInfo = null;
+                    m_device.GetImageInfo(ref imageInfo);
+                    if (imageInfo != null)
+                    {
+                        Bitmap bitmap = (Bitmap)this.imageDepart.Image;
+                        BitmapData bd = null;
+
+                        ImageUtils.CopyToBitmap(imageInfo, ref bitmap, ref bd, ref m_pixelFormat, ref m_rect, ref m_pixelType);
+                        if (bitmap != null)
+                        {
+                            lock(imgLock)
+                            {
+                                m_tmpImg = bitmap;
+                                if (TESTING)
+                                {
+                                    imageDepart.Image = bitmap;
+                                }
+                                Console.WriteLine("Image acquired, size : " + bitmap.Size);
+                            }
+                        }
+
+                        // Display image
+                        if (bd != null)
+                            bitmap.UnlockBits(bd);
+                    }
+
+                    // Remove (pop) image from image buffer
+                    m_device.PopImage(imageInfo);
+
+                    // Empty buffer
+                    m_device.ClearImageBuffer();
+                }
+            }
+        }
+
+        private void ProcessImage()
+        {
+            Bitmap bmp;
+            lock(imgLock)
+            {
+                if (m_tmpImg == null)
+                {
+                    return;
+                }
+                bmp = (Bitmap) m_tmpImg.Clone();
+            }
+            ClImage img = new ClImage();
+
+            unsafe
+            {
+                BitmapData bmpData = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+                img.objetLibDataImgPtr(1, bmpData.Scan0, bmpData.Stride, bmp.Height, bmp.Width);
+                bmp.UnlockBits(bmpData);
+            }
+
+            if (imageSeuillee.InvokeRequired)
+            {
+                imageSeuillee.BeginInvoke(new MethodInvoker(delegate
+                {
+                    imageSeuillee.SizeMode = PictureBoxSizeMode.StretchImage;
+                    imageSeuillee.Width = bmp.Width;
+                    imageSeuillee.Height = bmp.Height;
+
+                    // pour centrer image dans panel
+                    if (imageSeuillee.Width < panel1.Width)
+                        imageSeuillee.Left = (panel1.Width - imageSeuillee.Width) / 2;
+
+                    if (imageSeuillee.Height < panel1.Height)
+                        imageSeuillee.Top = (panel1.Height - imageSeuillee.Height) / 2;
+
+                    // transférer C++ vers bmp
+                    imageSeuillee.Image = bmp;
+                    imageSeuillee.Invalidate();
+                }));
+            }
+            else
+            {
+                imageSeuillee.SizeMode = PictureBoxSizeMode.StretchImage;
+                imageSeuillee.Width = bmp.Width;
+                imageSeuillee.Height = bmp.Height;
+
+                // pour centrer image dans panel
+                if (imageSeuillee.Width < panel1.Width)
+                    imageSeuillee.Left = (panel1.Width - imageSeuillee.Width) / 2;
+
+                if (imageSeuillee.Height < panel1.Height)
+                    imageSeuillee.Top = (panel1.Height - imageSeuillee.Height) / 2;
+
+                // transférer C++ vers bmp
+                imageSeuillee.Image = bmp;
+                imageSeuillee.Invalidate();
+            }
+
+            // Envoi de l'image
+            SendImageTCP(bmp);
+
+            // Envoi verdict
+            int ret = img.objetLibValeurChamp(0);
+            bool verdict = ret > 0;
+
+            Common.SetVerdict(verdictLabel, verdict);
+            SendVerdictSerial(verdict);
+        }
+
+        private void TriggerProcessImage(object sender, SerialDataReceivedEventArgs e)
+        {
+            string message = m_serialPort.ReadExisting();
+
+            // Clean up message from line breaks and spaces
+            message = message.Replace("\n", "").Replace("\r", "").Replace(" ", "");
+            if (message.Length == 0 || message.Equals(""))
+            {
+                return;
+            }
+            Common.AppendLog(logSerial, $"[ARDUINO] Message : {message}");    
+
+            // If message contains "OBJECT_CAM", then take current tmpImg, ProcessImage it and send it to server
+            if (message.Contains("X"))
+            {
+                Bitmap image;
+                lock (imgLock)
+                {
+                    if (m_tmpImg == null)
+                    {
+                        return;
+                    }
+                    image = (Bitmap)m_tmpImg.Clone();
+                    Console.WriteLine("Take");
+                }
+                if (image != null)
+                {
+                    // Do the above but thread safe
+                    if (this.imageDepart.InvokeRequired)
+                    {
+                        this.imageDepart.BeginInvoke(new MethodInvoker(delegate
+                        {
+                            this.imageDepart.Height = image.Height;
+                            this.imageDepart.Width = image.Width;
+                            this.imageDepart.Image = image;
+                            this.imageDepart.SizeMode = PictureBoxSizeMode.StretchImage;
+                            this.imageDepart.Invalidate();
+
+                            ProcessImage();
+                        }));
+                    }
+                }
+            }
+        }
+
+        private async void SendImageTCP(Bitmap bmp)
+        {
+            try
+            {
+                // Ensure the connection and stream are ready
+                await CheckTCPStream();
+
+                // Convert the Bitmap to a byte array
+                byte[] imageData;
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    Bitmap resizedBmp = Common.ResizeBitmap(bmp, bmp.Width / 4, bmp.Height / 4);
+                    resizedBmp.Save(ms, ImageFormat.Png); // Save the resized bitmap in PNG format
+                    imageData = ms.ToArray();
+                }
+
+                // Send the image size first
+                byte[] imageSize = BitConverter.GetBytes(imageData.Length);
+                await m_networkStream.WriteAsync(imageSize, 0, imageSize.Length);
+
+                // Send the image data
+                await m_networkStream.WriteAsync(imageData, 0, imageData.Length);
+
+                // Read acknowledgment
+                byte[] buffer = new byte[1024];
+                int numBytesRead = await m_networkStream.ReadAsync(buffer, 0, buffer.Length);
+                string receivedMessage = Encoding.ASCII.GetString(buffer, 0, numBytesRead);
+                Common.AppendLog(logTCP, $"[TCP] Acknowledgment reçu: {receivedMessage}");
+            }
+            catch (Exception ex)
+            {
+                Common.AppendLog(logTCP, $"[TCP] Erreur TCP: {ex.Message}");
+                m_tcpClient?.Dispose();
+                m_tcpClient = null;
+                m_networkStream = null;
+            }
+        }
+
+        private void SendVerdictSerial(bool verdict)
+        {
+            WriteSerial(verdict ? "OK" : "NOK");
         }
     }
 }

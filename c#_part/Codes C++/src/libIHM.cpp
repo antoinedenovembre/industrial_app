@@ -25,7 +25,6 @@ ClibIHM::ClibIHM(int nbChamps, byte* data, int stride, int nbLig, int nbCol){
 	CImageCouleur out(nbLig, nbCol);
 
 	// on remplit les pixels 
-
 	byte* pixPtr = (byte*)data;
 
 	for (int y = 0; y < nbLig; y++)
@@ -40,13 +39,28 @@ ClibIHM::ClibIHM(int nbChamps, byte* data, int stride, int nbLig, int nbCol){
 	}
 
 	CImageNdg seuil;
-
 	int seuilBas = 128;
 	int seuilHaut = 255;
+	seuil = this->imgPt->plan().seuillage("automatique", seuilBas, seuilHaut);
 
-	seuil = this->imgPt->plan().seuillage("automatique",seuilBas,seuilHaut);
+	// this->dataFromImg.at(0) = seuilBas;
 
-	this->dataFromImg.at(0) = seuilBas;
+	// On voit si l'image "seuil" est a 50% blanche ou noire
+	int nbPixels = seuil.lireNbPixels();
+	int nbPixelsNoirs = 0;
+	for (int i = 0; i < nbPixels; i++)
+	{
+		if (seuil(i) == 0)
+			nbPixelsNoirs++;
+	}
+	if (nbPixelsNoirs > nbPixels / 2)
+	{
+		this->dataFromImg.at(0) = 0;
+	}
+	else
+	{
+		this->dataFromImg.at(0) = 1;
+	}
 
 	for (int i = 0; i < seuil.lireNbPixels(); i++)
 	{
@@ -54,7 +68,6 @@ ClibIHM::ClibIHM(int nbChamps, byte* data, int stride, int nbLig, int nbCol){
 		out(i)[1] = 0;
 		out(i)[2] = 0;
 	}
-		
 
 	pixPtr = (byte*)data;
 	for (int y = 0; y < nbLig; y++)
@@ -68,7 +81,6 @@ ClibIHM::ClibIHM(int nbChamps, byte* data, int stride, int nbLig, int nbCol){
 		pixPtr += stride; // largeur une seule ligne gestion multiple 32 bits
 	}
 }
-
 
 ClibIHM::~ClibIHM() {
 	

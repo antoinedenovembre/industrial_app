@@ -15,7 +15,7 @@ private:
 
 	// data nécessaires à l'IHM donc fonction de l'application ciblée
 	int						nbDataImg; // nb champs Texte de l'IHM
-	std::vector<double>		dataFromImg; // champs Texte de l'IHM
+	std::vector<int>		dataFromImg; // champs Texte de l'IHM
 	CImageCouleur*          imgPt;       // 
 
 	///////////////////////////////////////
@@ -35,7 +35,7 @@ public:
 		return nbDataImg;
 	}
 
-	_declspec(dllexport) double lireChamp(int i) const {
+	_declspec(dllexport) int lireChamp(int i) const {
 		return dataFromImg.at(i);
 	}
 
@@ -57,7 +57,7 @@ extern "C" _declspec(dllexport) ClibIHM* objetLibDataImg(int nbChamps, byte* dat
 	return pImg;
 }
 
-extern "C" _declspec(dllexport) double valeurChamp(ClibIHM* pImg, int i)
+extern "C" _declspec(dllexport) int valeurChamp(ClibIHM* pImg, int i)
 {
 	return pImg->lireChamp(i);
 }

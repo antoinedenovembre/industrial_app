@@ -49,9 +49,9 @@ namespace libImage
         }
 
         [DllImport("libImage.dll", CallingConvention = CallingConvention.Cdecl)]
-        public static extern double valeurChamp(IntPtr pImg, int i);
+        public static extern int valeurChamp(IntPtr pImg, int i);
 
-        public double objetLibValeurChamp(int i)
+        public int objetLibValeurChamp(int i)
         {
             return valeurChamp(ClPtr, i);
         }

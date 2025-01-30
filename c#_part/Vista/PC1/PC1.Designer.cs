@@ -44,6 +44,8 @@
             this.arduinoStatus = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.logSerial = new System.Windows.Forms.TextBox();
+            this.label1 = new System.Windows.Forms.Label();
+            this.verdictLabel = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.imageDepart)).BeginInit();
             this.panel1.SuspendLayout();
             this.panel2.SuspendLayout();
@@ -186,7 +188,7 @@
             this.arduinoStatus.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.arduinoStatus.ForeColor = System.Drawing.Color.Red;
             this.arduinoStatus.ImageAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.arduinoStatus.Location = new System.Drawing.Point(1141, 33);
+            this.arduinoStatus.Location = new System.Drawing.Point(794, 28);
             this.arduinoStatus.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.arduinoStatus.Name = "arduinoStatus";
             this.arduinoStatus.Size = new System.Drawing.Size(106, 20);
@@ -197,7 +199,7 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(836, 33);
+            this.label2.Location = new System.Drawing.Point(643, 28);
             this.label2.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(64, 20);
@@ -207,17 +209,41 @@
             // logSerial
             // 
             this.logSerial.BackColor = System.Drawing.Color.White;
-            this.logSerial.Location = new System.Drawing.Point(840, 66);
+            this.logSerial.Location = new System.Drawing.Point(647, 61);
             this.logSerial.Multiline = true;
             this.logSerial.Name = "logSerial";
-            this.logSerial.Size = new System.Drawing.Size(407, 157);
+            this.logSerial.Size = new System.Drawing.Size(253, 157);
             this.logSerial.TabIndex = 19;
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(0, 0);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(51, 20);
+            this.label1.TabIndex = 22;
+            this.label1.Text = "label1";
+            // 
+            // verdictLabel
+            // 
+            this.verdictLabel.BackColor = System.Drawing.SystemColors.ControlDarkDark;
+            this.verdictLabel.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.verdictLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 15F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.verdictLabel.ForeColor = System.Drawing.Color.White;
+            this.verdictLabel.Location = new System.Drawing.Point(1046, 26);
+            this.verdictLabel.Name = "verdictLabel";
+            this.verdictLabel.Size = new System.Drawing.Size(201, 192);
+            this.verdictLabel.TabIndex = 23;
+            this.verdictLabel.Text = "INDEFINI";
+            this.verdictLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // PC1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1265, 864);
+            this.Controls.Add(this.verdictLabel);
+            this.Controls.Add(this.label1);
             this.Controls.Add(this.arduinoStatus);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.logSerial);
@@ -262,6 +288,8 @@
         private System.Windows.Forms.Label arduinoStatus;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.TextBox logSerial;
+        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Label verdictLabel;
     }
 }
 

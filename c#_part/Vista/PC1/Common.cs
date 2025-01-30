@@ -44,6 +44,23 @@ namespace PC1_Sender
             }
         }
 
+        public static void SetVerdict(Label label, bool verdict)
+        {
+            if (label.InvokeRequired)
+            {
+                label.Invoke((Action)(() =>
+                {
+                    label.Text = verdict ? "OK" : "NOK";
+                    label.BackColor = verdict ? Color.Green : Color.Red;
+                }));
+            }
+            else
+            {
+                label.Text = verdict ? "OK" : "NOK";
+                label.BackColor = verdict ? Color.Green : Color.Red;
+            }
+        }
+
         public static List<string> GetDevicesOnNetwork()
         {
             List<string> ipList = new List<string>();
