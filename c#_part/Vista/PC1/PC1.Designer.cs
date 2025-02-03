@@ -45,11 +45,16 @@
             this.label2 = new System.Windows.Forms.Label();
             this.logSerial = new System.Windows.Forms.TextBox();
             this.verdictLabel = new System.Windows.Forms.Label();
+            this.tabControl1 = new System.Windows.Forms.TabControl();
+            this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.tabPage2 = new System.Windows.Forms.TabPage();
             ((System.ComponentModel.ISupportInitialize)(this.imageDepart)).BeginInit();
             this.panel1.SuspendLayout();
             this.panel2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.imageSeuillee)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
+            this.tabControl1.SuspendLayout();
+            this.tabPage1.SuspendLayout();
             this.SuspendLayout();
             // 
             // ouvrirImage
@@ -75,7 +80,7 @@
             // panel1
             // 
             this.panel1.Controls.Add(this.imageDepart);
-            this.panel1.Location = new System.Drawing.Point(18, 231);
+            this.panel1.Location = new System.Drawing.Point(8, 217);
             this.panel1.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(600, 615);
@@ -86,7 +91,7 @@
             this.panel2.AutoScroll = true;
             this.panel2.Controls.Add(this.imageSeuillee);
             this.panel2.Controls.Add(this.pictureBox1);
-            this.panel2.Location = new System.Drawing.Point(647, 231);
+            this.panel2.Location = new System.Drawing.Point(637, 217);
             this.panel2.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.panel2.Name = "panel2";
             this.panel2.Size = new System.Drawing.Size(600, 615);
@@ -119,7 +124,7 @@
             // logCam
             // 
             this.logCam.BackColor = System.Drawing.Color.White;
-            this.logCam.Location = new System.Drawing.Point(18, 61);
+            this.logCam.Location = new System.Drawing.Point(8, 47);
             this.logCam.Multiline = true;
             this.logCam.Name = "logCam";
             this.logCam.Size = new System.Drawing.Size(293, 157);
@@ -128,7 +133,7 @@
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(14, 28);
+            this.label5.Location = new System.Drawing.Point(4, 14);
             this.label5.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(65, 20);
@@ -138,7 +143,7 @@
             // label6
             // 
             this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(334, 28);
+            this.label6.Location = new System.Drawing.Point(324, 14);
             this.label6.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(58, 20);
@@ -148,7 +153,7 @@
             // logTCP
             // 
             this.logTCP.BackColor = System.Drawing.Color.White;
-            this.logTCP.Location = new System.Drawing.Point(338, 61);
+            this.logTCP.Location = new System.Drawing.Point(328, 47);
             this.logTCP.Multiline = true;
             this.logTCP.Name = "logTCP";
             this.logTCP.Size = new System.Drawing.Size(280, 157);
@@ -160,7 +165,7 @@
             this.camStatus.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.camStatus.ForeColor = System.Drawing.Color.Red;
             this.camStatus.ImageAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.camStatus.Location = new System.Drawing.Point(205, 28);
+            this.camStatus.Location = new System.Drawing.Point(195, 14);
             this.camStatus.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.camStatus.Name = "camStatus";
             this.camStatus.Size = new System.Drawing.Size(106, 20);
@@ -173,7 +178,7 @@
             this.tcpStatus.AutoSize = true;
             this.tcpStatus.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.tcpStatus.ForeColor = System.Drawing.Color.Red;
-            this.tcpStatus.Location = new System.Drawing.Point(512, 28);
+            this.tcpStatus.Location = new System.Drawing.Point(502, 14);
             this.tcpStatus.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.tcpStatus.Name = "tcpStatus";
             this.tcpStatus.Size = new System.Drawing.Size(106, 20);
@@ -187,7 +192,7 @@
             this.arduinoStatus.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.arduinoStatus.ForeColor = System.Drawing.Color.Red;
             this.arduinoStatus.ImageAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.arduinoStatus.Location = new System.Drawing.Point(794, 28);
+            this.arduinoStatus.Location = new System.Drawing.Point(784, 14);
             this.arduinoStatus.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.arduinoStatus.Name = "arduinoStatus";
             this.arduinoStatus.Size = new System.Drawing.Size(106, 20);
@@ -198,7 +203,7 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(643, 28);
+            this.label2.Location = new System.Drawing.Point(633, 14);
             this.label2.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(64, 20);
@@ -208,7 +213,7 @@
             // logSerial
             // 
             this.logSerial.BackColor = System.Drawing.Color.White;
-            this.logSerial.Location = new System.Drawing.Point(647, 61);
+            this.logSerial.Location = new System.Drawing.Point(637, 47);
             this.logSerial.Multiline = true;
             this.logSerial.Name = "logSerial";
             this.logSerial.Size = new System.Drawing.Size(253, 157);
@@ -220,30 +225,61 @@
             this.verdictLabel.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.verdictLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 15F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.verdictLabel.ForeColor = System.Drawing.Color.White;
-            this.verdictLabel.Location = new System.Drawing.Point(1046, 26);
+            this.verdictLabel.Location = new System.Drawing.Point(1036, 12);
             this.verdictLabel.Name = "verdictLabel";
             this.verdictLabel.Size = new System.Drawing.Size(201, 192);
             this.verdictLabel.TabIndex = 23;
             this.verdictLabel.Text = "N/A";
             this.verdictLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
+            // tabControl1
+            // 
+            this.tabControl1.Controls.Add(this.tabPage2);
+            this.tabControl1.Controls.Add(this.tabPage1);
+            this.tabControl1.Location = new System.Drawing.Point(0, 0);
+            this.tabControl1.Name = "tabControl1";
+            this.tabControl1.SelectedIndex = 0;
+            this.tabControl1.Size = new System.Drawing.Size(1266, 883);
+            this.tabControl1.TabIndex = 24;
+            // 
+            // tabPage1
+            // 
+            this.tabPage1.Controls.Add(this.label5);
+            this.tabPage1.Controls.Add(this.verdictLabel);
+            this.tabPage1.Controls.Add(this.panel1);
+            this.tabPage1.Controls.Add(this.arduinoStatus);
+            this.tabPage1.Controls.Add(this.panel2);
+            this.tabPage1.Controls.Add(this.label2);
+            this.tabPage1.Controls.Add(this.logCam);
+            this.tabPage1.Controls.Add(this.logSerial);
+            this.tabPage1.Controls.Add(this.logTCP);
+            this.tabPage1.Controls.Add(this.tcpStatus);
+            this.tabPage1.Controls.Add(this.label6);
+            this.tabPage1.Controls.Add(this.camStatus);
+            this.tabPage1.Location = new System.Drawing.Point(4, 29);
+            this.tabPage1.Name = "tabPage1";
+            this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage1.Size = new System.Drawing.Size(1258, 850);
+            this.tabPage1.TabIndex = 0;
+            this.tabPage1.Text = "Traitement";
+            this.tabPage1.UseVisualStyleBackColor = true;
+            // 
+            // tabPage2
+            // 
+            this.tabPage2.Location = new System.Drawing.Point(4, 29);
+            this.tabPage2.Name = "tabPage2";
+            this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage2.Size = new System.Drawing.Size(1258, 850);
+            this.tabPage2.TabIndex = 1;
+            this.tabPage2.Text = "Calibration";
+            this.tabPage2.UseVisualStyleBackColor = true;
+            // 
             // PC1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1265, 864);
-            this.Controls.Add(this.verdictLabel);
-            this.Controls.Add(this.arduinoStatus);
-            this.Controls.Add(this.label2);
-            this.Controls.Add(this.logSerial);
-            this.Controls.Add(this.tcpStatus);
-            this.Controls.Add(this.camStatus);
-            this.Controls.Add(this.label6);
-            this.Controls.Add(this.logTCP);
-            this.Controls.Add(this.label5);
-            this.Controls.Add(this.logCam);
-            this.Controls.Add(this.panel2);
-            this.Controls.Add(this.panel1);
+            this.ClientSize = new System.Drawing.Size(1276, 889);
+            this.Controls.Add(this.tabControl1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
@@ -255,8 +291,10 @@
             this.panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.imageSeuillee)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
+            this.tabControl1.ResumeLayout(false);
+            this.tabPage1.ResumeLayout(false);
+            this.tabPage1.PerformLayout();
             this.ResumeLayout(false);
-            this.PerformLayout();
 
         }
 
@@ -278,6 +316,9 @@
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.TextBox logSerial;
         private System.Windows.Forms.Label verdictLabel;
+        private System.Windows.Forms.TabControl tabControl1;
+        private System.Windows.Forms.TabPage tabPage2;
+        private System.Windows.Forms.TabPage tabPage1;
     }
 }
 
