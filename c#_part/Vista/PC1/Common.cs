@@ -44,6 +44,38 @@ namespace PC1_Sender
             }
         }
 
+        public static void SetStatusCalib(Label label, bool status)
+        {
+            if (label.InvokeRequired)
+            {
+                label.Invoke((Action)(() =>
+                {
+                    label.Text = status ? "OK" : "N/A";
+                    label.ForeColor = status ? Color.Green : Color.Red;
+                }));
+            }
+            else
+            {
+                label.Text = status ? "OK" : "N/A";
+                label.ForeColor = status ? Color.Green : Color.Red;
+            }
+        }
+
+        public static void EnableButton(Button button, bool enable)
+        {
+            if (button.InvokeRequired)
+            {
+                button.Invoke((Action)(() =>
+                {
+                    button.Enabled = enable;
+                }));
+            }
+            else
+            {
+                button.Enabled = enable;
+            }
+        }
+
         public static void SetVerdict(Label label, int verdict)
         {
             if (label.InvokeRequired)

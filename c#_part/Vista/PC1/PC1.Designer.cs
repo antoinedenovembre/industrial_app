@@ -47,18 +47,19 @@
             this.verdictLabel = new System.Windows.Forms.Label();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPage2 = new System.Windows.Forms.TabPage();
-            this.tabPage1 = new System.Windows.Forms.TabPage();
             this.btnCalibNoir = new System.Windows.Forms.Button();
             this.logCalib = new System.Windows.Forms.TextBox();
             this.lblStatutCalibN = new System.Windows.Forms.Label();
             this.lblStatutCalibB = new System.Windows.Forms.Label();
             this.btnCalibBlanc = new System.Windows.Forms.Button();
-            this.imageCalibNoir = new System.Windows.Forms.PictureBox();
             this.label3 = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
+            this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.panel3 = new System.Windows.Forms.Panel();
             this.imageCalibBlanc = new System.Windows.Forms.PictureBox();
             this.panel4 = new System.Windows.Forms.Panel();
-            this.panel3 = new System.Windows.Forms.Panel();
+            this.imageCalibNoir = new System.Windows.Forms.PictureBox();
+            this.label4 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.imageDepart)).BeginInit();
             this.panel1.SuspendLayout();
             this.panel2.SuspendLayout();
@@ -67,10 +68,10 @@
             this.tabControl1.SuspendLayout();
             this.tabPage2.SuspendLayout();
             this.tabPage1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.imageCalibNoir)).BeginInit();
+            this.panel3.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.imageCalibBlanc)).BeginInit();
             this.panel4.SuspendLayout();
-            this.panel3.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.imageCalibNoir)).BeginInit();
             this.SuspendLayout();
             // 
             // ouvrirImage
@@ -260,6 +261,7 @@
             // 
             // tabPage2
             // 
+            this.tabPage2.Controls.Add(this.label4);
             this.tabPage2.Controls.Add(this.panel4);
             this.tabPage2.Controls.Add(this.panel3);
             this.tabPage2.Controls.Add(this.btnCalibNoir);
@@ -277,41 +279,20 @@
             this.tabPage2.Text = "Calibration";
             this.tabPage2.UseVisualStyleBackColor = true;
             // 
-            // tabPage1
-            // 
-            this.tabPage1.Controls.Add(this.label5);
-            this.tabPage1.Controls.Add(this.verdictLabel);
-            this.tabPage1.Controls.Add(this.panel1);
-            this.tabPage1.Controls.Add(this.arduinoStatus);
-            this.tabPage1.Controls.Add(this.panel2);
-            this.tabPage1.Controls.Add(this.label2);
-            this.tabPage1.Controls.Add(this.logCam);
-            this.tabPage1.Controls.Add(this.logSerial);
-            this.tabPage1.Controls.Add(this.logTCP);
-            this.tabPage1.Controls.Add(this.tcpStatus);
-            this.tabPage1.Controls.Add(this.label6);
-            this.tabPage1.Controls.Add(this.camStatus);
-            this.tabPage1.Location = new System.Drawing.Point(4, 29);
-            this.tabPage1.Name = "tabPage1";
-            this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage1.Size = new System.Drawing.Size(1258, 850);
-            this.tabPage1.TabIndex = 0;
-            this.tabPage1.Text = "Traitement";
-            this.tabPage1.UseVisualStyleBackColor = true;
-            // 
             // btnCalibNoir
             // 
-            this.btnCalibNoir.Location = new System.Drawing.Point(649, 106);
+            this.btnCalibNoir.Enabled = false;
+            this.btnCalibNoir.Location = new System.Drawing.Point(12, 106);
             this.btnCalibNoir.Name = "btnCalibNoir";
-            this.btnCalibNoir.Size = new System.Drawing.Size(139, 62);
+            this.btnCalibNoir.Size = new System.Drawing.Size(776, 62);
             this.btnCalibNoir.TabIndex = 20;
             this.btnCalibNoir.Text = "Calibration noir";
             this.btnCalibNoir.UseVisualStyleBackColor = true;
-            this.btnCalibNoir.Click += new System.EventHandler(this.btnCalibNoir_Click);
+            this.btnCalibNoir.Click += new System.EventHandler(this.StartCalibBlack);
             // 
             // logCalib
             // 
-            this.logCalib.Location = new System.Drawing.Point(908, 26);
+            this.logCalib.Location = new System.Drawing.Point(886, 38);
             this.logCalib.Multiline = true;
             this.logCalib.Name = "logCalib";
             this.logCalib.Size = new System.Drawing.Size(341, 163);
@@ -341,22 +322,14 @@
             // 
             // btnCalibBlanc
             // 
-            this.btnCalibBlanc.Location = new System.Drawing.Point(649, 38);
+            this.btnCalibBlanc.Enabled = false;
+            this.btnCalibBlanc.Location = new System.Drawing.Point(12, 38);
             this.btnCalibBlanc.Name = "btnCalibBlanc";
-            this.btnCalibBlanc.Size = new System.Drawing.Size(139, 62);
+            this.btnCalibBlanc.Size = new System.Drawing.Size(776, 62);
             this.btnCalibBlanc.TabIndex = 14;
             this.btnCalibBlanc.Text = "Calibration blanc";
             this.btnCalibBlanc.UseVisualStyleBackColor = true;
-            this.btnCalibBlanc.Click += new System.EventHandler(this.btnCalibBlanc_Click);
-            // 
-            // imageCalibNoir
-            // 
-            this.imageCalibNoir.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.imageCalibNoir.Location = new System.Drawing.Point(0, 0);
-            this.imageCalibNoir.Name = "imageCalibNoir";
-            this.imageCalibNoir.Size = new System.Drawing.Size(600, 615);
-            this.imageCalibNoir.TabIndex = 12;
-            this.imageCalibNoir.TabStop = false;
+            this.btnCalibBlanc.Click += new System.EventHandler(this.StartCalibWhite);
             // 
             // label3
             // 
@@ -376,36 +349,91 @@
             this.label1.TabIndex = 17;
             this.label1.Text = "Image de calibration blanc :";
             // 
+            // tabPage1
+            // 
+            this.tabPage1.Controls.Add(this.label5);
+            this.tabPage1.Controls.Add(this.verdictLabel);
+            this.tabPage1.Controls.Add(this.panel1);
+            this.tabPage1.Controls.Add(this.arduinoStatus);
+            this.tabPage1.Controls.Add(this.panel2);
+            this.tabPage1.Controls.Add(this.label2);
+            this.tabPage1.Controls.Add(this.logCam);
+            this.tabPage1.Controls.Add(this.logSerial);
+            this.tabPage1.Controls.Add(this.logTCP);
+            this.tabPage1.Controls.Add(this.tcpStatus);
+            this.tabPage1.Controls.Add(this.label6);
+            this.tabPage1.Controls.Add(this.camStatus);
+            this.tabPage1.Location = new System.Drawing.Point(4, 29);
+            this.tabPage1.Name = "tabPage1";
+            this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage1.Size = new System.Drawing.Size(1258, 850);
+            this.tabPage1.TabIndex = 0;
+            this.tabPage1.Text = "Traitement";
+            this.tabPage1.UseVisualStyleBackColor = true;
+            // 
+            // panel3
+            // 
+            this.panel3.Controls.Add(this.imageCalibBlanc);
+            this.panel3.Location = new System.Drawing.Point(12, 235);
+            this.panel3.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            this.panel3.Name = "panel3";
+            this.panel3.Size = new System.Drawing.Size(594, 607);
+            this.panel3.TabIndex = 21;
+            // 
             // imageCalibBlanc
             // 
-            this.imageCalibBlanc.Location = new System.Drawing.Point(-1, -1);
+            this.imageCalibBlanc.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            this.imageCalibBlanc.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.imageCalibBlanc.Cursor = System.Windows.Forms.Cursors.Default;
+            this.imageCalibBlanc.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.imageCalibBlanc.ImageLocation = "";
+            this.imageCalibBlanc.Location = new System.Drawing.Point(0, 0);
+            this.imageCalibBlanc.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.imageCalibBlanc.Name = "imageCalibBlanc";
-            this.imageCalibBlanc.Size = new System.Drawing.Size(600, 615);
-            this.imageCalibBlanc.TabIndex = 13;
+            this.imageCalibBlanc.Size = new System.Drawing.Size(594, 607);
+            this.imageCalibBlanc.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.imageCalibBlanc.TabIndex = 0;
             this.imageCalibBlanc.TabStop = false;
             // 
             // panel4
             // 
             this.panel4.Controls.Add(this.imageCalibNoir);
-            this.panel4.Location = new System.Drawing.Point(649, 227);
+            this.panel4.Location = new System.Drawing.Point(651, 235);
+            this.panel4.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.panel4.Name = "panel4";
-            this.panel4.Size = new System.Drawing.Size(600, 615);
-            this.panel4.TabIndex = 22;
+            this.panel4.Size = new System.Drawing.Size(600, 607);
+            this.panel4.TabIndex = 3;
             // 
-            // panel3
+            // imageCalibNoir
             // 
-            this.panel3.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.panel3.Controls.Add(this.imageCalibBlanc);
-            this.panel3.Location = new System.Drawing.Point(8, 227);
-            this.panel3.Name = "panel3";
-            this.panel3.Size = new System.Drawing.Size(600, 615);
-            this.panel3.TabIndex = 21;
+            this.imageCalibNoir.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            this.imageCalibNoir.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.imageCalibNoir.Cursor = System.Windows.Forms.Cursors.Default;
+            this.imageCalibNoir.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.imageCalibNoir.ImageLocation = "";
+            this.imageCalibNoir.Location = new System.Drawing.Point(0, 0);
+            this.imageCalibNoir.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            this.imageCalibNoir.Name = "imageCalibNoir";
+            this.imageCalibNoir.Size = new System.Drawing.Size(600, 607);
+            this.imageCalibNoir.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.imageCalibNoir.TabIndex = 0;
+            this.imageCalibNoir.TabStop = false;
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Location = new System.Drawing.Point(882, 15);
+            this.label4.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(84, 20);
+            this.label4.TabIndex = 22;
+            this.label4.Text = "Calibration";
             // 
             // PC1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1276, 889);
+            this.ClientSize = new System.Drawing.Size(1276, 895);
             this.Controls.Add(this.tabControl1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
@@ -423,10 +451,10 @@
             this.tabPage2.PerformLayout();
             this.tabPage1.ResumeLayout(false);
             this.tabPage1.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.imageCalibNoir)).EndInit();
+            this.panel3.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.imageCalibBlanc)).EndInit();
             this.panel4.ResumeLayout(false);
-            this.panel3.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.imageCalibNoir)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -457,12 +485,13 @@
         private System.Windows.Forms.Label lblStatutCalibN;
         private System.Windows.Forms.Label lblStatutCalibB;
         private System.Windows.Forms.Button btnCalibBlanc;
-        private System.Windows.Forms.PictureBox imageCalibNoir;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.PictureBox imageCalibBlanc;
         private System.Windows.Forms.Panel panel4;
+        private System.Windows.Forms.PictureBox imageCalibNoir;
         private System.Windows.Forms.Panel panel3;
+        private System.Windows.Forms.PictureBox imageCalibBlanc;
+        private System.Windows.Forms.Label label4;
     }
 }
 

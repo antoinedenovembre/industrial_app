@@ -26,10 +26,8 @@ namespace libImage
                 ClPtr = IntPtr.Zero;
         }
 
-
         // va-et-vient avec constructeur C#/C++
         // obligatoire dans toute nouvelle classe propre à l'application
-
         [DllImport("libImage.dll", CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr objetLib();
 
@@ -54,6 +52,14 @@ namespace libImage
         public int objetLibValeurChamp(int i)
         {
             return valeurChamp(ClPtr, i);
+        }
+
+        [DllImport("libImage.dll", CallingConvention = CallingConvention.Cdecl)]
+        public static extern int calibImageExtern(IntPtr pImg);
+
+        public int objetLibCalibImage()
+        {
+            return calibImageExtern(ClPtr);
         }
     }
 }

@@ -185,6 +185,7 @@ class CImageNdg {
 
 		// moyenne
 		_declspec(dllexport) double moyenne();
+		_declspec(dllexport) double mediane();
 
 		// signatures
 		_declspec(dllexport) MOMENTS signatures(const std::vector<unsigned long>& h);
