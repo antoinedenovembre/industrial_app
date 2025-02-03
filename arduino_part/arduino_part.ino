@@ -18,8 +18,8 @@ static State workState = UNDEFINED;
 
 // =============== PINS ===============
 const int pinStartRobot = 8; // Pin détection objet (DI3)
-const int pin2 = 12; // Pin objet 2 (DI2)
 const int pin1 = 13; // Pin objet 1 (DI1)
+const int pin2 = 12; // Pin objet 2 (DI2)
 const int pinIsMoving = 7;  // Pin état de déplacement (DO1)
 
 // =============== INITIALISATION ===============
@@ -112,6 +112,7 @@ void send1()
   digitalWrite(pin2, LOW);
   delay(1000);  // Attend une seconde
   digitalWrite(pin1, LOW);
+  digitalWrite(pin2, LOW);
 }
 
 void send2()
@@ -119,6 +120,7 @@ void send2()
   digitalWrite(pin1, LOW);
   digitalWrite(pin2, HIGH);
   delay(1000);  // Attend une seconde
+  digitalWrite(pin1, LOW);
   digitalWrite(pin2, LOW);
 }
 
@@ -156,7 +158,7 @@ void loop()
       break;
 
     case VERDICT_1:
-      send3();
+      send1();
       break;
     
     case VERDICT_2:

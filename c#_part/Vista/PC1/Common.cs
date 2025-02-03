@@ -85,6 +85,12 @@ namespace PC1_Sender
                     label.Text = ConvertVerdictToString(verdict);
                     label.BackColor = ConvertVerdictToColor(verdict);
 
+                    if (verdict == 1)
+                    {
+                        // Put text in black color
+                        label.ForeColor = Color.Black;
+                    }
+
                     // After 1sec, bring back the undefined color
                     Timer timer = new Timer();
                     timer.Interval = 3000;
@@ -92,6 +98,7 @@ namespace PC1_Sender
                     {
                         label.Text = ConvertVerdictToString(0);
                         label.BackColor = ConvertVerdictToColor(0);
+                        label.ForeColor = Color.White;
                         timer.Stop();
                     };
                     timer.Start();
@@ -102,6 +109,12 @@ namespace PC1_Sender
                 label.Text = ConvertVerdictToString(verdict);
                 label.BackColor = ConvertVerdictToColor(verdict);
 
+                if (verdict == 1)
+                {
+                    // Put text in black color
+                    label.ForeColor = Color.Black;
+                }
+
                 // After 1sec, bring back the undefined color
                 Timer timer = new Timer();
                 timer.Interval = 3000;
@@ -109,6 +122,7 @@ namespace PC1_Sender
                 {
                     label.Text = ConvertVerdictToString(0);
                     label.BackColor = ConvertVerdictToColor(0);
+                    label.ForeColor = Color.White;
                     timer.Stop();
                 };
                 timer.Start();
