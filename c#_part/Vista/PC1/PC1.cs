@@ -14,7 +14,6 @@ using System.Threading;
 
 using libImage;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
 using System.Linq;
 
 namespace PC1_Sender
@@ -45,10 +44,13 @@ namespace PC1_Sender
         private NetworkStream m_networkStream;
         private readonly int m_port = 8001;
 
-
         // Calibration
-        private int m_seuilHaut = 0;
-        private int m_seuilBas = 0;
+        private int m_delta = 5;
+        private bool m_whiteCalibrated = false;
+        private bool m_blackCalibrated = false;
+        private int m_whiteThreshold = 0;
+        private int m_blackThreshold = 0;
+
         // ============================================= CONSTRUCTOR =============================================
         public PC1()
         {
@@ -75,6 +77,12 @@ namespace PC1_Sender
                         Console.WriteLine($"Camera initialization failed: {ex.Message}");
                         Thread.Sleep(1000); // Avoid tight loop, retry every second
                     }
+                }
+                if (m_camConnected)
+                {
+                    Common.EnableButton(btnCalibBlanc, true);
+                    Common.EnableButton(btnCalibNoir, true);
+                    Common.AppendLog(logCalib, "[CALIBRATION] Caméra connectée");
                 }
             });
 
@@ -151,6 +159,7 @@ namespace PC1_Sender
         private void InitCamera()
         {
             Common.AppendLog(logCam, $"[CAMERA] Initialisation de la caméra...");
+            Common.AppendLog(logCalib, $"[CALIBRATION] En attente de la connexion caméra...");
 
             CameraSuite.InitCameraAPI();
             ICameraAPI smcsVisionApi = CameraSuite.GetCameraAPI();
@@ -446,7 +455,7 @@ namespace PC1_Sender
                     m_device.GetImageInfo(ref imageInfo);
                     if (imageInfo != null)
                     {
-                        Bitmap bitmap = (Bitmap)this.imageDepart.Image;
+                        Bitmap bitmap = (Bitmap) this.imageDepart.Image;
                         BitmapData bd = null;
 
                         ImageUtils.CopyToBitmap(imageInfo, ref bitmap, ref bd, ref m_pixelFormat, ref m_rect, ref m_pixelType);
@@ -479,6 +488,12 @@ namespace PC1_Sender
 
         private void ProcessImage()
         {
+            if (!m_blackCalibrated || !m_whiteCalibrated)
+            {
+                Common.AppendLog(logCalib, "[CALIBRATION] Calibration non effectuée, annulation du traitement...");
+                return;
+            }
+
             Bitmap bmp;
             lock(imgLock)
             {
@@ -542,9 +557,20 @@ namespace PC1_Sender
             // 3: Noir
             // 2: Gris
             // 1: Blanc
-            int verdict = img.objetLibValeurChamp(0);
+            int mediane;
+            mediane = img.objetLibCalibImage();
+
+            int verdict = -1;
+            if (mediane <= m_blackThreshold)
+                verdict = 3;
+            else if (mediane >= m_whiteThreshold)
+                verdict = 1;
+            else
+                verdict = 2;
 
             Common.SetVerdict(verdictLabel, verdict);
+
+            // Envoi verdict
             SendVerdictSerial(verdict);
         }
 
@@ -637,77 +663,99 @@ namespace PC1_Sender
             WriteSerial(verdict.ToString());
         }
 
-        private void btnCalibBlanc_Click(object sender, EventArgs e)
+        private void StartCalibWhite(object sender, EventArgs e)
         {
-            Common.AppendLog(logCalib, "Calibration blanc...");
+            Common.AppendLog(logCalib, "[CALIBRATION] Calibration blanc...");
             lock (imgLock)
             {
                 if (m_tmpImg != null)
                 {
-                    Console.WriteLine("Processing image...");
-                    // Do the above but thread safe
-                    if (this.imageCalibBlanc.InvokeRequired)
-                    {
-                        this.imageCalibBlanc.BeginInvoke(new MethodInvoker(delegate
-                        {
-                            lock (imgLock)
-                            {
-                                this.imageCalibBlanc.Height = m_tmpImg.Height;
-                                this.imageCalibBlanc.Width = m_tmpImg.Width;
-                                this.imageCalibBlanc.Image = m_tmpImg;
-                                this.imageCalibBlanc.SizeMode = PictureBoxSizeMode.StretchImage;
-                                this.imageCalibBlanc.Invalidate();
-                                Console.WriteLine("Image displayed");
-                            }
+                    m_whiteThreshold = ImageCalib();
+                    m_whiteThreshold -= m_delta;
+                    Common.AppendLog(logCalib, $"[CALIBRATION] Seuil blanc = {m_whiteThreshold}");
+                    Common.SetStatusCalib(lblStatutCalibB, true);
+                    m_whiteCalibrated = true;
+                    btnCalibBlanc.Enabled = false;
 
-                            m_seuilHaut = ProcessImageCalib();
-                            Common.AppendLog(logCalib, $"Seuil haut = {m_seuilHaut.ToString()}");
+                    Bitmap image;
+                    image = (Bitmap) m_tmpImg.Clone();
+
+                    if (imageCalibBlanc.InvokeRequired)
+                    {
+                        imageCalibBlanc.BeginInvoke(new MethodInvoker(delegate
+                        {
+                            this.imageCalibBlanc.Height = image.Height;
+                            this.imageCalibBlanc.Width = image.Width;
+                            this.imageCalibBlanc.Image = image;
+                            this.imageCalibBlanc.SizeMode = PictureBoxSizeMode.StretchImage;
+                            imageCalibBlanc.Invalidate();
                         }));
+                    }
+                    else
+                    {
+                        this.imageCalibBlanc.Height = image.Height;
+                        this.imageCalibBlanc.Width = image.Width;
+                        this.imageCalibBlanc.Image = image;
+                        this.imageCalibBlanc.SizeMode = PictureBoxSizeMode.StretchImage;
+                        imageCalibBlanc.Invalidate();
                     }
                 }
                 else
                 {
+                    Common.AppendLog(logCalib, "[CALIBRATION] Echec de la calibration blanc");
+                    Common.SetStatusCalib(lblStatutCalibB, false);
                     Console.WriteLine("No image to process");
                 }
             }
         }
 
-        private void btnCalibNoir_Click(object sender, EventArgs e)
+        private void StartCalibBlack(object sender, EventArgs e)
         {
-            Common.AppendLog(logCalib, "Calibration noir...");
+            Common.AppendLog(logCalib, "[CALIBRATION] Calibration noir...");
             lock (imgLock)
             {
                 if (m_tmpImg != null)
                 {
-                    Console.WriteLine("Processing image...");
-                    // Do the above but thread safe
-                    if (this.imageCalibNoir.InvokeRequired)
-                    {
-                        this.imageCalibBlanc.BeginInvoke(new MethodInvoker(delegate
-                        {
-                            lock (imgLock)
-                            {
-                                this.imageCalibNoir.Height = m_tmpImg.Height;
-                                this.imageCalibNoir.Width = m_tmpImg.Width;
-                                this.imageCalibNoir.Image = m_tmpImg;
-                                this.imageCalibNoir.SizeMode = PictureBoxSizeMode.StretchImage;
-                                this.imageCalibNoir.Invalidate();
-                                Console.WriteLine("Image displayed");
-                            }
+                    m_blackThreshold = ImageCalib();
+                    m_blackThreshold += m_delta;
+                    Common.AppendLog(logCalib, $"[CALIBRATION] Seuil noir = {m_blackThreshold}");  
+                    Common.SetStatusCalib(lblStatutCalibN, true);
+                    m_blackCalibrated = true;
+                    btnCalibNoir.Enabled = false;
 
-                            m_seuilBas = ProcessImageCalib();
-                            Common.AppendLog(logCalib, $"Seuil bas = {m_seuilBas.ToString()}");
+                    Bitmap image;
+                    image = (Bitmap) m_tmpImg.Clone();
+
+                    if (imageCalibNoir.InvokeRequired)
+                    {
+                        imageCalibNoir.BeginInvoke(new MethodInvoker(delegate
+                        {
+                            this.imageCalibNoir.Height = image.Height;
+                            this.imageCalibNoir.Width = image.Width;
+                            this.imageCalibNoir.Image = image;
+                            this.imageCalibNoir.SizeMode = PictureBoxSizeMode.StretchImage;
+                            imageCalibNoir.Invalidate();
                         }));
+                    }
+                    else
+                    {
+                        this.imageCalibNoir.Height = image.Height;
+                        this.imageCalibNoir.Width = image.Width;
+                        this.imageCalibNoir.Image = image;
+                        this.imageCalibNoir.SizeMode = PictureBoxSizeMode.StretchImage;
+                        imageCalibNoir.Invalidate();
                     }
                 }
                 else
                 {
+                    Common.AppendLog(logCalib, "[CALIBRATION] Echec de la calibration noir");
+                    Common.SetStatusCalib(lblStatutCalibN, false);
                     Console.WriteLine("No image to process");
                 }
             }
         }
 
-        private int ProcessImageCalib()
+        private int ImageCalib()
         {
             Bitmap bmp;
             lock (imgLock)
@@ -727,9 +775,9 @@ namespace PC1_Sender
                 bmp.UnlockBits(bmpData);
             }
 
-            int resultSeuil;
-            resultSeuil = img.objetLibValeurChamp(0);
-            return resultSeuil;
+            int resultCalib;
+            resultCalib = img.objetLibCalibImage();
+            return resultCalib;
         }
     }
 }

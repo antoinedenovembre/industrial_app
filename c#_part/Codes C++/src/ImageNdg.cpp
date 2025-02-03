@@ -260,6 +260,13 @@ double CImageNdg::moyenne()
 	return globales.moyenne;
 }
 
+double CImageNdg::mediane()
+{
+	MOMENTS globales = this->signatures();
+
+	return globales.mediane;
+}
+
 // signatures globales
 
 MOMENTS CImageNdg::signatures(const std::vector<unsigned long>& h) {

@@ -7,42 +7,39 @@
 
 #include <windows.h>
 
-class ClibIHM {
-
-	///////////////////////////////////////
+class ClibIHM 
+{
 private:
-	///////////////////////////////////////
+	int						nbDataImg; // Nb champs image
+	std::vector<int>		dataFromImg; // Champs image
+	CImageCouleur*          imgPt;       //  Image
 
-	// data nécessaires à l'IHM donc fonction de l'application ciblée
-	int						nbDataImg; // nb champs Texte de l'IHM
-	std::vector<int>		dataFromImg; // champs Texte de l'IHM
-	CImageCouleur*          imgPt;       // 
-
-	///////////////////////////////////////
 public:
-	///////////////////////////////////////
+	// Constructeurs
+	_declspec(dllexport) ClibIHM();
 
-	// constructeurs
-	_declspec(dllexport) ClibIHM(); // par défaut
-
-	_declspec(dllexport) ClibIHM(int nbChamps, byte* data, int stride, int nbLig, int nbCol); // par image format bmp C#
+	_declspec(dllexport) ClibIHM(int nbChamps, byte* data, int stride, int nbLig, int nbCol); // Utilisé pour les images
 
 	_declspec(dllexport) ~ClibIHM();
 
-	// get et set 
-
-	_declspec(dllexport) int lireNbChamps() const {
+	// Get et set 
+	_declspec(dllexport) int lireNbChamps() const 
+	{
 		return nbDataImg;
 	}
 
-	_declspec(dllexport) int lireChamp(int i) const {
+	_declspec(dllexport) int lireChamp(int i) const 
+	{
 		return dataFromImg.at(i);
 	}
 
-	_declspec(dllexport) CImageCouleur* imgData() const {
+	_declspec(dllexport) CImageCouleur* imgData() const 
+	{
 		return imgPt;
 	}
 
+	// Methodes liées appli
+	_declspec(dllexport) int calibImage();
 };
 
 extern "C" _declspec(dllexport) ClibIHM* objetLib()
@@ -60,4 +57,9 @@ extern "C" _declspec(dllexport) ClibIHM* objetLibDataImg(int nbChamps, byte* dat
 extern "C" _declspec(dllexport) int valeurChamp(ClibIHM* pImg, int i)
 {
 	return pImg->lireChamp(i);
+}
+
+extern "C" _declspec(dllexport) int calibImageExtern(ClibIHM* pImg)
+{
+	return pImg->calibImage();
 }

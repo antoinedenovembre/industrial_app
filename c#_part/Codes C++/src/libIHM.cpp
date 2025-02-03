@@ -10,21 +10,22 @@
 
 #include "libIHM.h"
 
-ClibIHM::ClibIHM() {
-
+ClibIHM::ClibIHM() 
+{
 	this->nbDataImg = 0;
 	this->dataFromImg.clear();
 	this->imgPt = NULL;
 }
 
-ClibIHM::ClibIHM(int nbChamps, byte* data, int stride, int nbLig, int nbCol){
+ClibIHM::ClibIHM(int nbChamps, byte* data, int stride, int nbLig, int nbCol)
+{
 	this->nbDataImg = nbChamps;
 	this->dataFromImg.resize(nbChamps);
 
 	this->imgPt = new CImageCouleur(nbLig, nbCol);
 	CImageCouleur out(nbLig, nbCol);
 
-	// on remplit les pixels 
+	// On copie les pixels de la bitmap
 	byte* pixPtr = (byte*)data;
 
 	for (int y = 0; y < nbLig; y++)
@@ -35,31 +36,12 @@ ClibIHM::ClibIHM(int nbChamps, byte* data, int stride, int nbLig, int nbCol){
 			this->imgPt->operator()(y, x)[1] = pixPtr[3 * x + 1];
 			this->imgPt->operator()(y, x)[2] = pixPtr[3 * x ];
 		}
-		pixPtr += stride; // largeur une seule ligne gestion multiple 32 bits
+		pixPtr += stride; // Largeur une seule ligne gestion multiple 32 bits
 	}
 
 	CImageNdg imgNdg = this->imgPt->plan();
 	int seuilPlaceholder = 0;
 	CImageNdg imgSeuillee = this->imgPt->plan().seuillage("automatique", seuilPlaceholder, seuilPlaceholder);
-
-	// Calcul de la moyenne des pixels
-	int moyenne = (int) imgNdg.moyenne();
-	int seuilBlanc = 235;
-	int seuilNoir = 20;
-
-	// En fonction de la moyenne, on met 1, 2 ou 3 dans dataFromImg
-	if (moyenne < seuilNoir)
-	{
-		this->dataFromImg.at(0) = 3; // Noir
-	}
-	else if (moyenne < seuilBlanc)
-	{
-		this->dataFromImg.at(0) = 2; // Gris
-	}
-	else
-	{
-		this->dataFromImg.at(0) = 1; // Blanc
-	}
 
 	for (int i = 0; i < imgSeuillee.lireNbPixels(); i++)
 	{
@@ -79,6 +61,21 @@ ClibIHM::ClibIHM(int nbChamps, byte* data, int stride, int nbLig, int nbCol){
 		}
 		pixPtr += stride; // largeur une seule ligne gestion multiple 32 bits
 	}
+}
+
+int ClibIHM::calibImage()
+{
+	if (this->imgPt == NULL)
+	{
+		return -1;
+	}
+
+	CImageNdg imgNdg = this->imgPt->plan();
+
+	// Calcul médiane
+	int mediane = (int) imgNdg.mediane();
+
+	return mediane;
 }
 
 ClibIHM::~ClibIHM() {
