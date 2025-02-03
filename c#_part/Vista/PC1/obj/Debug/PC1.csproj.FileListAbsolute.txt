@@ -20,3 +20,14 @@ C:\Users\adute\Desktop\IPSI3\SmartIndustries\projetC#\industrial_app\c#_part\Vis
 C:\Users\adute\Desktop\IPSI3\SmartIndustries\projetC#\industrial_app\c#_part\Vista\PC1\obj\Debug\PC1.csproj.CopyComplete
 C:\Users\adute\Desktop\IPSI3\SmartIndustries\projetC#\industrial_app\c#_part\Vista\PC1\obj\Debug\PC1_Sender.exe
 C:\Users\adute\Desktop\IPSI3\SmartIndustries\projetC#\industrial_app\c#_part\Vista\PC1\obj\Debug\PC1_Sender.pdb
+D:\Perso\TELECOM\GIT\industrial_app\c#_part\Vista\PC1\bin\Debug\PC1_Sender.exe.config
+D:\Perso\TELECOM\GIT\industrial_app\c#_part\Vista\PC1\bin\Debug\PC1_Sender.exe
+D:\Perso\TELECOM\GIT\industrial_app\c#_part\Vista\PC1\bin\Debug\PC1_Sender.pdb
+D:\Perso\TELECOM\GIT\industrial_app\c#_part\Vista\PC1\obj\Debug\PC1.csproj.AssemblyReference.cache
+D:\Perso\TELECOM\GIT\industrial_app\c#_part\Vista\PC1\obj\Debug\PC1_Sender.PC1.resources
+D:\Perso\TELECOM\GIT\industrial_app\c#_part\Vista\PC1\obj\Debug\PC1_Sender.Properties.Resources.resources
+D:\Perso\TELECOM\GIT\industrial_app\c#_part\Vista\PC1\obj\Debug\PC1.csproj.GenerateResource.cache
+D:\Perso\TELECOM\GIT\industrial_app\c#_part\Vista\PC1\obj\Debug\PC1.csproj.CoreCompileInputs.cache
+D:\Perso\TELECOM\GIT\industrial_app\c#_part\Vista\PC1\obj\Debug\PC1.csproj.CopyComplete
+D:\Perso\TELECOM\GIT\industrial_app\c#_part\Vista\PC1\obj\Debug\PC1_Sender.exe
+D:\Perso\TELECOM\GIT\industrial_app\c#_part\Vista\PC1\obj\Debug\PC1_Sender.pdb

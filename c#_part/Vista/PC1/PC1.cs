@@ -45,6 +45,10 @@ namespace PC1_Sender
         private NetworkStream m_networkStream;
         private readonly int m_port = 8001;
 
+
+        // Calibration
+        private int m_seuilHaut = 0;
+        private int m_seuilBas = 0;
         // ============================================= CONSTRUCTOR =============================================
         public PC1()
         {
@@ -631,6 +635,101 @@ namespace PC1_Sender
         {
             Console.WriteLine("Verdict: " + verdict);
             WriteSerial(verdict.ToString());
+        }
+
+        private void btnCalibBlanc_Click(object sender, EventArgs e)
+        {
+            Common.AppendLog(logCalib, "Calibration blanc...");
+            lock (imgLock)
+            {
+                if (m_tmpImg != null)
+                {
+                    Console.WriteLine("Processing image...");
+                    // Do the above but thread safe
+                    if (this.imageCalibBlanc.InvokeRequired)
+                    {
+                        this.imageCalibBlanc.BeginInvoke(new MethodInvoker(delegate
+                        {
+                            lock (imgLock)
+                            {
+                                this.imageCalibBlanc.Height = m_tmpImg.Height;
+                                this.imageCalibBlanc.Width = m_tmpImg.Width;
+                                this.imageCalibBlanc.Image = m_tmpImg;
+                                this.imageCalibBlanc.SizeMode = PictureBoxSizeMode.StretchImage;
+                                this.imageCalibBlanc.Invalidate();
+                                Console.WriteLine("Image displayed");
+                            }
+
+                            m_seuilHaut = ProcessImageCalib();
+                            Common.AppendLog(logCalib, $"Seuil haut = {m_seuilHaut.ToString()}");
+                        }));
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("No image to process");
+                }
+            }
+        }
+
+        private void btnCalibNoir_Click(object sender, EventArgs e)
+        {
+            Common.AppendLog(logCalib, "Calibration noir...");
+            lock (imgLock)
+            {
+                if (m_tmpImg != null)
+                {
+                    Console.WriteLine("Processing image...");
+                    // Do the above but thread safe
+                    if (this.imageCalibNoir.InvokeRequired)
+                    {
+                        this.imageCalibBlanc.BeginInvoke(new MethodInvoker(delegate
+                        {
+                            lock (imgLock)
+                            {
+                                this.imageCalibNoir.Height = m_tmpImg.Height;
+                                this.imageCalibNoir.Width = m_tmpImg.Width;
+                                this.imageCalibNoir.Image = m_tmpImg;
+                                this.imageCalibNoir.SizeMode = PictureBoxSizeMode.StretchImage;
+                                this.imageCalibNoir.Invalidate();
+                                Console.WriteLine("Image displayed");
+                            }
+
+                            m_seuilBas = ProcessImageCalib();
+                            Common.AppendLog(logCalib, $"Seuil bas = {m_seuilBas.ToString()}");
+                        }));
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("No image to process");
+                }
+            }
+        }
+
+        private int ProcessImageCalib()
+        {
+            Bitmap bmp;
+            lock (imgLock)
+            {
+                if (m_tmpImg == null)
+                {
+                    return 0;
+                }
+                bmp = (Bitmap)m_tmpImg.Clone();
+            }
+            ClImage img = new ClImage();
+
+            unsafe
+            {
+                BitmapData bmpData = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+                img.objetLibDataImgPtr(1, bmpData.Scan0, bmpData.Stride, bmp.Height, bmp.Width);
+                bmp.UnlockBits(bmpData);
+            }
+
+            int resultSeuil;
+            resultSeuil = img.objetLibValeurChamp(0);
+            return resultSeuil;
         }
     }
 }
