@@ -535,8 +535,10 @@ namespace PC1_Sender
             SendImageTCP(bmp);
 
             // Envoi verdict
-            int ret = img.objetLibValeurChamp(0);
-            bool verdict = ret > 0;
+            // 3: Noir
+            // 2: Gris
+            // 1: Blanc
+            int verdict = img.objetLibValeurChamp(0);
 
             Common.SetVerdict(verdictLabel, verdict);
             SendVerdictSerial(verdict);
@@ -625,9 +627,10 @@ namespace PC1_Sender
             }
         }
 
-        private void SendVerdictSerial(bool verdict)
+        private void SendVerdictSerial(int verdict)
         {
-            WriteSerial(verdict ? "OK" : "NOK");
+            Console.WriteLine("Verdict: " + verdict);
+            WriteSerial(verdict.ToString());
         }
     }
 }

@@ -38,33 +38,32 @@ ClibIHM::ClibIHM(int nbChamps, byte* data, int stride, int nbLig, int nbCol){
 		pixPtr += stride; // largeur une seule ligne gestion multiple 32 bits
 	}
 
-	CImageNdg seuil;
-	int seuilBas = 128;
-	int seuilHaut = 255;
-	seuil = this->imgPt->plan().seuillage("automatique", seuilBas, seuilHaut);
+	CImageNdg imgNdg = this->imgPt->plan();
+	int seuilPlaceholder = 0;
+	CImageNdg imgSeuillee = this->imgPt->plan().seuillage("automatique", seuilPlaceholder, seuilPlaceholder);
 
-	// this->dataFromImg.at(0) = seuilBas;
+	// Calcul de la moyenne des pixels
+	int moyenne = (int) imgNdg.moyenne();
+	int seuilBlanc = 235;
+	int seuilNoir = 20;
 
-	// On voit si l'image "seuil" est a 50% blanche ou noire
-	int nbPixels = seuil.lireNbPixels();
-	int nbPixelsNoirs = 0;
-	for (int i = 0; i < nbPixels; i++)
+	// En fonction de la moyenne, on met 1, 2 ou 3 dans dataFromImg
+	if (moyenne < seuilNoir)
 	{
-		if (seuil(i) == 0)
-			nbPixelsNoirs++;
+		this->dataFromImg.at(0) = 3; // Noir
 	}
-	if (nbPixelsNoirs > nbPixels / 2)
+	else if (moyenne < seuilBlanc)
 	{
-		this->dataFromImg.at(0) = 0;
+		this->dataFromImg.at(0) = 2; // Gris
 	}
 	else
 	{
-		this->dataFromImg.at(0) = 1;
+		this->dataFromImg.at(0) = 1; // Blanc
 	}
 
-	for (int i = 0; i < seuil.lireNbPixels(); i++)
+	for (int i = 0; i < imgSeuillee.lireNbPixels(); i++)
 	{
-		out(i)[0] = (unsigned char)(255*(int)seuil(i));
+		out(i)[0] = (unsigned char)(255*(int)imgSeuillee(i));
 		out(i)[1] = 0;
 		out(i)[2] = 0;
 	}

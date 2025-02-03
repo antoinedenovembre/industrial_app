@@ -44,20 +44,72 @@ namespace PC1_Sender
             }
         }
 
-        public static void SetVerdict(Label label, bool verdict)
+        public static void SetVerdict(Label label, int verdict)
         {
             if (label.InvokeRequired)
             {
                 label.Invoke((Action)(() =>
                 {
-                    label.Text = verdict ? "OK" : "NOK";
-                    label.BackColor = verdict ? Color.Green : Color.Red;
+                    label.Text = ConvertVerdictToString(verdict);
+                    label.BackColor = ConvertVerdictToColor(verdict);
+
+                    // After 1sec, bring back the undefined color
+                    Timer timer = new Timer();
+                    timer.Interval = 3000;
+                    timer.Tick += (sender, e) =>
+                    {
+                        label.Text = ConvertVerdictToString(0);
+                        label.BackColor = ConvertVerdictToColor(0);
+                        timer.Stop();
+                    };
+                    timer.Start();
                 }));
             }
             else
             {
-                label.Text = verdict ? "OK" : "NOK";
-                label.BackColor = verdict ? Color.Green : Color.Red;
+                label.Text = ConvertVerdictToString(verdict);
+                label.BackColor = ConvertVerdictToColor(verdict);
+
+                // After 1sec, bring back the undefined color
+                Timer timer = new Timer();
+                timer.Interval = 3000;
+                timer.Tick += (sender, e) =>
+                {
+                    label.Text = ConvertVerdictToString(0);
+                    label.BackColor = ConvertVerdictToColor(0);
+                    timer.Stop();
+                };
+                timer.Start();
+            }
+        }
+
+        private static string ConvertVerdictToString(int verdict)
+        {
+            switch(verdict)
+            {
+                case 1:
+                    return "Blanc";
+                case 2:
+                    return "Gris";
+                case 3:
+                    return "Noir";
+                default:
+                    return "N/A";
+            }
+        }
+
+        private static Color ConvertVerdictToColor(int verdict)
+        {
+            switch (verdict)
+            {
+                case 1:
+                    return Color.White;
+                case 2:
+                    return Color.Gray;
+                case 3:
+                    return Color.Black;
+                default:
+                    return Color.Orange;
             }
         }
 

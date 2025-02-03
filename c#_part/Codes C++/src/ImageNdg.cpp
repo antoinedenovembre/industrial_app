@@ -251,6 +251,15 @@ std::vector<unsigned long> CImageNdg::histogramme(bool enregistrementCSV, int pa
 	return h;
 }
 
+// Moyenne
+
+double CImageNdg::moyenne()
+{
+	MOMENTS globales = this->signatures();
+
+	return globales.moyenne;
+}
+
 // signatures globales
 
 MOMENTS CImageNdg::signatures(const std::vector<unsigned long>& h) {
